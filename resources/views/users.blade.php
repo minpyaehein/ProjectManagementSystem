@@ -4,8 +4,8 @@
 @section('page-name', 'Users')
 
 @section('content')
-    <section class="content">
-        <div class="pagehead">
+    <section class="content users-page">
+        <div class="pagehead users-pagehead">
             <div>
                 <div class="eyebrow">Directory</div>
                 <h1>User Management</h1>
@@ -33,184 +33,219 @@
             </div>
         @endif
 
-        <div class="card">
+        <div class="card users-card">
             <form
                 class="toolbar users-toolbar"
+                id="userFilterForm"
                 method="GET"
                 action="{{ route('usersPage') }}"
             >
                 <div class="users-search-group">
+                    <label class="sr-only" for="userSearch">Search users</label>
+
                     <input
                         class="search"
-                        id="search"
+                        id="userSearch"
                         name="search"
                         type="search"
                         value="{{ request('search') }}"
                         placeholder="Search users..."
+                        autocomplete="off"
                         aria-label="Search users"
                     >
 
-                    <button class="btn" type="submit">
+                    <button class="btn users-search-button btn-primary" type="submit">
                         Search
                     </button>
 
                     @if (request()->filled('search') || request()->filled('status'))
-                        <a class="btn users-clear-button" href="{{ route('usersPage') }}">
+                        <a
+                            class="btn users-clear-button"
+                            href="{{ route('usersPage') }}"
+                        >
                             Clear
                         </a>
                     @endif
                 </div>
 
-                <select
-                    class="filter users-status-filter"
-                    id="status"
-                    name="status"
-                    aria-label="Filter users by status"
-                    onchange="this.form.submit()"
-                >
-                    <option value="">All statuses</option>
-                    <option value="Active" @selected(request('status') === 'Active')>
-                        Active
-                    </option>
-                    <option value="Inactive" @selected(request('status') === 'Inactive')>
-                        Inactive
-                    </option>
-                </select>
+                <div class="users-status-group">
+                    <label class="sr-only" for="userStatus">
+                        Filter users by status
+                    </label>
+
+                    <select
+                        class="filter users-status-filter"
+                        id="userStatus"
+                        name="status"
+                        aria-label="Filter users by status"
+                    >
+                        <option value="">All statuses</option>
+                        <option value="Active" @selected(request('status') === 'Active')>
+                            Active
+                        </option>
+                        <option value="Inactive" @selected(request('status') === 'Inactive')>
+                            Inactive
+                        </option>
+                    </select>
+                </div>
             </form>
 
-            <div class="table-summary">
-                Total users: <strong>{{ $users->total() }}</strong>
+            <div
+                class="users-filter-progress"
+                id="userFilterProgress"
+                role="status"
+                hidden
+            >
+                Updating user results...
             </div>
 
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Updated</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
+            <div id="userResults" aria-live="polite">
+                <div class="table-summary">
+                    Total users: <strong>{{ number_format($users->total()) }}</strong>
+                </div>
 
-                    <tbody>
-                        @forelse ($users as $user)
+                <div class="table-wrap users-table-wrap">
+                    <table class="users-table">
+                        <thead>
                             <tr>
-                                <td>
-                                    <span class="item-name">{{ $user->name }}</span>
-                                    <div class="small-muted">
-                                        USR-{{ str_pad((string) $user->user_id, 4, '0', STR_PAD_LEFT) }}
-                                    </div>
-                                </td>
-
-                                <td>
-                                    @if ($user->email)
-                                        <a class="user-email-link" href="mailto:{{ $user->email }}">
-                                            {{ $user->email }}
-                                        </a>
-                                    @else
-                                        <span class="small-muted">Not provided</span>
-                                    @endif
-                                </td>
-
-                                <td>{{ $user->role?->name ?? 'No Role' }}</td>
-
-                                <td>
-                                    {{ $user->updated_at?->diffForHumans() ?? 'Not available' }}
-                                </td>
-
-                                <td>
-                                    <span class="pill {{ $user->status === 'Inactive' ? 'gray' : 'green' }}">
-                                        {{ $user->status ?? 'Active' }}
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <div class="table-actions">
-                                        @if (auth()->user()->hasPermission('users.view'))
-                                            <a
-                                                class="action-btn action-view"
-                                                href="{{ route('users.show', $user) }}"
-                                            >
-                                                View
-                                            </a>
-                                        @endif
-
-                                        @if (auth()->user()->hasPermission('users.edit'))
-                                            <a
-                                                class="action-btn action-edit"
-                                                href="{{ route('users.edit', $user) }}"
-                                            >
-                                                Edit
-                                            </a>
-                                        @endif
-
-                                        @if (
-                                            auth()->user()->hasPermission('users.deactivate')
-                                            && auth()->id() !== $user->user_id
-                                            && $user->status !== 'Inactive'
-                                        )
-                                            <form
-                                                action="{{ route('users.deactivate', $user) }}"
-                                                method="POST"
-                                                onsubmit="return confirm('Deactivate this user?');"
-                                            >
-                                                @csrf
-                                                @method('PATCH')
-
-                                                <button
-                                                    class="action-btn action-delete"
-                                                    type="submit"
-                                                >
-                                                    Deactivate
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                </td>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Updated</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6">
-                                    <div class="empty-state">
-                                        @if (request()->filled('search') || request()->filled('status'))
-                                            <strong>No matching users found.</strong>
-                                            <p>Change the search text or selected status.</p>
-                                            <a class="btn" href="{{ route('usersPage') }}">
-                                                Clear filters
+                        </thead>
+
+                        <tbody>
+                            @forelse ($users as $user)
+                                <tr>
+                                    <td>
+                                        <span class="item-name">{{ $user->name }}</span>
+                                        <div class="small-muted">
+                                            USR-{{ str_pad((string) $user->user_id, 4, '0', STR_PAD_LEFT) }}
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        @if ($user->email)
+                                            <a
+                                                class="user-email-link"
+                                                href="mailto:{{ $user->email }}"
+                                            >
+                                                {{ $user->email }}
                                             </a>
                                         @else
-                                            <strong>No users found.</strong>
-                                            <p>Create a user account to display it here.</p>
+                                            <span class="small-muted">Not provided</span>
+                                        @endif
+                                    </td>
 
-                                            @if (auth()->user()->hasPermission('users.create'))
-                                                <a class="btn btn-primary" href="{{ route('users.create') }}">
-                                                    ＋ Create user
+                                    <td>{{ $user->role?->name ?? 'No Role' }}</td>
+
+                                    <td>
+                                        {{ $user->updated_at?->diffForHumans() ?? 'Not available' }}
+                                    </td>
+
+                                    <td>
+                                        <span
+                                            class="pill {{ $user->status === 'Inactive' ? 'gray' : 'green' }}"
+                                        >
+                                            {{ $user->status ?? 'Active' }}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <div class="table-actions">
+                                            @if (auth()->user()->hasPermission('users.view'))
+                                                <a
+                                                    class="action-btn action-view"
+                                                    href="{{ route('users.show', $user) }}"
+                                                >
+                                                    View
                                                 </a>
                                             @endif
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
 
-            @if ($users->hasPages())
-                <div class="pagination-wrapper">
-                    {{ $users->links('vendor.pagination.custom') }}
+                                            @if (auth()->user()->hasPermission('users.edit'))
+                                                <a
+                                                    class="action-btn action-edit"
+                                                    href="{{ route('users.edit', $user) }}"
+                                                >
+                                                    Edit
+                                                </a>
+                                            @endif
+
+                                            @if (
+                                                auth()->user()->hasPermission('users.deactivate')
+                                                && auth()->id() !== $user->user_id
+                                                && $user->status !== 'Inactive'
+                                            )
+                                                <form
+                                                    action="{{ route('users.deactivate', $user) }}"
+                                                    method="POST"
+                                                    onsubmit="return confirm('Deactivate this user?');"
+                                                >
+                                                    @csrf
+                                                    @method('PATCH')
+
+                                                    <button
+                                                        class="action-btn action-delete"
+                                                        type="submit"
+                                                    >
+                                                        Deactivate
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="empty-state">
+                                            @if (request()->filled('search') || request()->filled('status'))
+                                                <strong>No matching users found.</strong>
+                                                <p>Change the search text or selected status.</p>
+                                                <a class="btn" href="{{ route('usersPage') }}">
+                                                    Clear filters
+                                                </a>
+                                            @else
+                                                <strong>No users found.</strong>
+                                                <p>Create a user account to display it here.</p>
+
+                                                @if (auth()->user()->hasPermission('users.create'))
+                                                    <a
+                                                        class="btn btn-primary"
+                                                        href="{{ route('users.create') }}"
+                                                    >
+                                                        ＋ Create user
+                                                    </a>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-            @endif
+
+                @if ($users->hasPages())
+                    <div class="pagination-wrapper">
+                        {{ $users->links('vendor.pagination.custom') }}
+                    </div>
+                @endif
+            </div>
         </div>
     </section>
 @endsection
 
-
 @push('styles')
     <style>
+        .users-page,
+        .users-card {
+            min-width: 0;
+        }
+
         .users-toolbar {
             display: flex;
             align-items: center;
@@ -224,15 +259,15 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            flex: 1 1 420px;
+            flex: 1 1 520px;
             min-width: 0;
         }
 
         .users-search-group .search {
-            flex: 1 1 280px;
-            width: auto;
-            min-width: 230px;
-            max-width: 340px;
+            flex: 1 1 320px;
+            width: 100%;
+            min-width: 180px;
+            max-width: 280px;
             margin: 0;
         }
 
@@ -243,13 +278,104 @@
             white-space: nowrap;
         }
 
+        .users-status-group {
+            flex: 0 0 auto;
+        }
+
         .users-status-filter {
-            flex: 0 0 180px;
             width: 180px;
-            margin-left: auto;
+            margin: 0;
+        }
+
+        .users-filter-progress {
+            margin: -4px 0 12px;
+            color: var(--green2);
+            font-size: 10px;
+            font-weight: 750;
+        }
+
+        .users-filter-progress[hidden] {
+            display: none;
+        }
+
+        #userResults {
+            position: relative;
+            transition: opacity .15s ease;
+        }
+
+        #userResults.is-filtering {
+            opacity: .55;
+            pointer-events: none;
+        }
+
+        .users-table-wrap {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .users-table {
+            min-width: 850px;
+        }
+
+        .users-table th:last-child,
+        .users-table td:last-child {
+            text-align: right;
+        }
+
+        .user-email-link {
+            color: var(--green2);
+            font-weight: 650;
+        }
+
+        .user-email-link:hover {
+            color: var(--green);
+            text-decoration: underline;
+        }
+
+        .action-delete {
+            border-color: #efb0ac;
+            background: #fff0ef;
+            color: var(--red);
+        }
+
+        .table-actions form {
+            margin: 0;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            border: 0;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
         }
 
         @media (max-width: 720px) {
+            .users-page {
+                padding-right: 14px;
+                padding-left: 14px;
+            }
+
+            .users-pagehead {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .users-pagehead .actions,
+            .users-pagehead .btn {
+                width: 100%;
+            }
+
+            .users-card {
+                padding: 15px;
+            }
+
             .users-toolbar {
                 align-items: stretch;
                 flex-direction: column;
@@ -277,10 +403,30 @@
                 width: 100%;
             }
 
+            .users-status-group,
             .users-status-filter {
                 width: 100%;
-                margin-left: 0;
+            }
+
+            .table-summary {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .users-search-group {
+                grid-template-columns: 1fr;
+            }
+
+            .users-search-group .users-search-button,
+            .users-search-group .users-clear-button {
+                grid-column: auto;
+                width: 100%;
             }
         }
     </style>
+@endpush
+
+@push('scripts')
+    <script src="{{ asset('js/user-auto-filter.js') }}" defer></script>
 @endpush
