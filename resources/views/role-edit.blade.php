@@ -1,6 +1,6 @@
 @extends('layouts.master')
 
-@section('title', 'Edit role | Golden Pride')
+@section('title', 'Edit Role | Golden Pride')
 @section('page-name', 'Roles / Edit')
 
 @section('content')
@@ -58,8 +58,8 @@
             ->all();
     @endphp
 
-    <section class="content">
-        <div class="pagehead">
+    <section class="content role-edit-page">
+        <div class="pagehead role-edit-pagehead">
             <div>
                 <div class="eyebrow">Access control</div>
                 <h1>Edit role</h1>
@@ -87,7 +87,7 @@
 
         <div class="card role-form-card">
             @if ($errors->any())
-                <div class="alert alert-danger">
+                <div class="alert alert-danger" role="alert">
                     <strong>Please correct the following errors:</strong>
 
                     <ul>
@@ -106,7 +106,7 @@
                 @csrf
                 @method('PUT')
 
-                <div class="form-grid">
+                <div class="role-information-grid">
                     <div class="field">
                         <label for="name">Role name</label>
 
@@ -116,6 +116,7 @@
                             type="text"
                             value="{{ old('name', $role->name) }}"
                             maxlength="255"
+                            autocomplete="off"
                             required
                         >
 
@@ -133,136 +134,134 @@
                             type="text"
                             value="{{ old('description', $role->description) }}"
                             maxlength="1000"
+                            autocomplete="off"
                         >
 
                         @error('description')
                             <span class="field-error">{{ $message }}</span>
                         @enderror
                     </div>
-
-                    <div class="field full permission-section">
-                        <div class="permission-section-heading">
-                            <div>
-                                <span class="permission-kicker">Permissions</span>
-                                <h2>Choose module access</h2>
-                                <p>
-                                    Select individual actions or use All to select
-                                    every available action in a module.
-                                </p>
-                            </div>
-
-                            <div class="permission-global-actions">
-                                <button
-                                    class="permission-text-button"
-                                    id="selectEverything"
-                                    type="button"
-                                >
-                                    Select all
-                                </button>
-
-                                <button
-                                    class="permission-text-button permission-clear-button"
-                                    id="clearEverything"
-                                    type="button"
-                                >
-                                    Clear all
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="permission-list-simple">
-                            @foreach ($modules as $moduleKey => $moduleLabel)
-                                @php
-                                    $actions = $moduleActions[$moduleKey] ?? [];
-                                @endphp
-
-                                <section
-                                    class="permission-module-simple"
-                                    data-permission-module="{{ $moduleKey }}"
-                                >
-                                    <div class="permission-module-label">
-                                        <span
-                                            class="permission-module-dot"
-                                            aria-hidden="true"
-                                        ></span>
-                                        <span>{{ $moduleLabel }}</span>
-                                    </div>
-
-                                    <div class="permission-options-row">
-                                        <label class="permission-choice permission-choice-all">
-                                            <input
-                                                class="module-all-checkbox"
-                                                type="checkbox"
-                                                data-module="{{ $moduleKey }}"
-                                            >
-                                            <span class="permission-choice-label">All</span>
-                                            <i aria-hidden="true">✓</i>
-                                        </label>
-
-                                        @foreach ($actions as $actionKey => $actionLabel)
-                                            @php
-                                                $permissionSlug = $moduleKey . '.' . $actionKey;
-                                                $permission = $permissionsBySlug->get($permissionSlug);
-                                            @endphp
-
-                                            @if ($permission)
-                                                <label class="permission-choice">
-                                                    <input
-                                                        class="permission-checkbox"
-                                                        type="checkbox"
-                                                        name="permissions[]"
-                                                        value="{{ $permission->permission_id }}"
-                                                        data-module="{{ $moduleKey }}"
-                                                        @checked(
-                                                            in_array(
-                                                                (int) $permission->permission_id,
-                                                                $selectedPermissionIds,
-                                                                true
-                                                            )
-                                                        )
-                                                    >
-                                                    <span class="permission-choice-label">
-                                                        {{ $actionLabel }}
-                                                    </span>
-                                                    <i aria-hidden="true">✓</i>
-                                                </label>
-                                            @else
-                                                <div
-                                                    class="permission-choice permission-choice-disabled"
-                                                    aria-disabled="true"
-                                                    title="{{ $permissionSlug }} is not available"
-                                                >
-                                                    <span class="permission-choice-label">
-                                                        {{ $actionLabel }}
-                                                    </span>
-                                                    <i aria-hidden="true"></i>
-                                                </div>
-                                            @endif
-                                        @endforeach
-                                    </div>
-                                </section>
-                            @endforeach
-                        </div>
-
-                        <div class="permission-selection-footer">
-                            <span>Changes apply after saving.</span>
-                            <strong id="permissionSelectionCount">0 selected</strong>
-                        </div>
-
-                        @error('permissions')
-                            <span class="field-error">{{ $message }}</span>
-                        @enderror
-
-                        @error('permissions.*')
-                            <span class="field-error">{{ $message }}</span>
-                        @enderror
-                    </div>
                 </div>
 
-                <div class="form-footer">
-                    <a class="btn" href="{{ route('rolesPage') }}">
-                        Cancel
-                    </a>
+                <section class="permission-section" aria-labelledby="permission-heading">
+                    <div class="permission-section-heading">
+                        <div>
+                            <span class="permission-kicker">Permissions</span>
+                            <h2 id="permission-heading">Choose module access</h2>
+                            <p>
+                                Select individual actions or use All to select every
+                                available action in a module.
+                            </p>
+                        </div>
+
+                        <div class="permission-global-actions">
+                            <button
+                                class="permission-text-button"
+                                id="selectEverything"
+                                type="button"
+                            >
+                                Select all
+                            </button>
+
+                            <button
+                                class="permission-text-button permission-clear-button"
+                                id="clearEverything"
+                                type="button"
+                            >
+                                Clear all
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="permission-list-simple">
+                        @foreach ($modules as $moduleKey => $moduleLabel)
+                            @php
+                                $actions = $moduleActions[$moduleKey] ?? [];
+                            @endphp
+
+                            <section
+                                class="permission-module-simple"
+                                data-permission-module="{{ $moduleKey }}"
+                                aria-labelledby="module-{{ $moduleKey }}"
+                            >
+                                <div class="permission-module-label">
+                                    <span class="permission-module-dot" aria-hidden="true"></span>
+                                    <span id="module-{{ $moduleKey }}">{{ $moduleLabel }}</span>
+                                </div>
+
+                                <div class="permission-options-row">
+                                    <label class="permission-choice permission-choice-all">
+                                        <input
+                                            class="module-all-checkbox"
+                                            type="checkbox"
+                                            data-module="{{ $moduleKey }}"
+                                            aria-label="Select all {{ $moduleLabel }} permissions"
+                                        >
+                                        <span class="permission-choice-label">All</span>
+                                        <i aria-hidden="true">✓</i>
+                                    </label>
+
+                                    @foreach ($actions as $actionKey => $actionLabel)
+                                        @php
+                                            $permissionSlug = $moduleKey . '.' . $actionKey;
+                                            $permission = $permissionsBySlug->get($permissionSlug);
+                                        @endphp
+
+                                        @if ($permission)
+                                            <label class="permission-choice">
+                                                <input
+                                                    class="permission-checkbox"
+                                                    type="checkbox"
+                                                    name="permissions[]"
+                                                    value="{{ $permission->permission_id }}"
+                                                    data-module="{{ $moduleKey }}"
+                                                    @checked(
+                                                        in_array(
+                                                            (int) $permission->permission_id,
+                                                            $selectedPermissionIds,
+                                                            true
+                                                        )
+                                                    )
+                                                >
+                                                <span class="permission-choice-label">
+                                                    {{ $actionLabel }}
+                                                </span>
+                                                <i aria-hidden="true">✓</i>
+                                            </label>
+                                        @else
+                                            <div
+                                                class="permission-choice permission-choice-disabled"
+                                                aria-disabled="true"
+                                                title="{{ $permissionSlug }} is not available"
+                                            >
+                                                <span class="permission-choice-label">
+                                                    {{ $actionLabel }}
+                                                </span>
+                                                <i aria-hidden="true"></i>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </section>
+                        @endforeach
+                    </div>
+
+                    <div class="permission-selection-footer" aria-live="polite">
+                        <span>Changes apply after saving.</span>
+                        <strong id="permissionSelectionCount">0 selected</strong>
+                    </div>
+
+                    @error('permissions')
+                        <span class="field-error">{{ $message }}</span>
+                    @enderror
+
+                    @error('permissions.*')
+                        <span class="field-error">{{ $message }}</span>
+                    @enderror
+                </section>
+
+                <div class="form-footer role-form-footer">
+                    <a class="btn" href="{{ route('rolesPage') }}">Cancel</a>
 
                     <button class="btn btn-primary" type="submit">
                         Save changes
@@ -273,27 +272,409 @@
     </section>
 @endsection
 
+@push('styles')
+    <style>
+        .role-edit-page {
+            min-width: 0;
+        }
+
+        .role-form-card {
+            width: 100%;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .role-form-card .alert ul {
+            margin: 8px 0 0;
+            padding-left: 18px;
+        }
+
+        .role-information-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .permission-section {
+            margin-top: 24px;
+            padding-top: 22px;
+            border-top: 1px solid var(--line);
+        }
+
+        .permission-section-heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 18px;
+        }
+
+        .permission-kicker {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--green);
+            font-size: 9px;
+            font-weight: 850;
+            letter-spacing: .11em;
+            text-transform: uppercase;
+        }
+
+        .permission-section-heading h2 {
+            margin: 0;
+            color: var(--ink);
+            font-size: 16px;
+            font-weight: 850;
+        }
+
+        .permission-section-heading p {
+            max-width: 620px;
+            margin: 5px 0 0;
+            color: var(--muted);
+            font-size: 10px;
+            line-height: 1.55;
+        }
+
+        .permission-global-actions {
+            display: flex;
+            flex-shrink: 0;
+            gap: 8px;
+        }
+
+        .permission-text-button {
+            min-height: 38px;
+            padding: 7px 13px;
+            border: 1px solid var(--green2);
+            border-radius: 8px;
+            background: var(--mint);
+            color: var(--green);
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .permission-clear-button {
+            border-color: var(--line);
+            background: var(--white);
+            color: var(--muted);
+        }
+
+        .permission-list-simple {
+            display: grid;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--white);
+        }
+
+        .permission-module-simple {
+            display: grid;
+            grid-template-columns: minmax(155px, .85fr) minmax(0, 3.15fr);
+            align-items: stretch;
+            min-width: 0;
+            border-bottom: 1px solid var(--line);
+            transition: background-color .18s ease;
+        }
+
+        .permission-module-simple:last-child {
+            border-bottom: 0;
+        }
+
+        .permission-module-simple.has-selection {
+            background: #fbfdfb;
+        }
+
+        .permission-module-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            padding: 15px 16px;
+            border-right: 1px solid var(--line);
+            background: #f7f9f7;
+            color: var(--ink);
+            font-size: 11px;
+            font-weight: 850;
+        }
+
+        .permission-module-label > span:last-child {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .permission-module-dot {
+            display: block;
+            flex: 0 0 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #c8d2cc;
+        }
+
+        .permission-module-simple.has-selection .permission-module-dot {
+            background: var(--green);
+            box-shadow: 0 0 0 4px rgba(36, 88, 73, .09);
+        }
+
+        .permission-options-row {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(84px, 1fr));
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            padding: 10px 12px;
+        }
+
+        .permission-choice {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            min-height: 42px;
+            padding: 8px 9px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: var(--ink);
+            cursor: pointer;
+        }
+
+        .permission-choice:hover {
+            border-color: var(--line);
+            background: #f6f9f7;
+        }
+
+        .permission-choice-all {
+            background: #f8faf8;
+        }
+
+        .permission-choice-label {
+            order: 2;
+            min-width: 0;
+            overflow: hidden;
+            font-size: 9px;
+            font-weight: 800;
+            line-height: 1.25;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .permission-choice input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: 0;
+            opacity: 0;
+        }
+
+        .permission-choice i {
+            order: 1;
+            display: grid;
+            flex: 0 0 21px;
+            width: 21px;
+            height: 21px;
+            border: 1px solid #b8c5bd;
+            border-radius: 5px;
+            background: var(--white);
+            color: transparent;
+            font-style: normal;
+            font-size: 11px;
+            font-weight: 900;
+            place-items: center;
+        }
+
+        .permission-choice:has(input:checked) {
+            border-color: #b7d0c2;
+            background: var(--mint);
+        }
+
+        .permission-choice:has(input:checked) i {
+            border-color: var(--green);
+            background: var(--green);
+            color: var(--white);
+        }
+
+        .permission-choice:has(input:indeterminate) {
+            border-color: #dec784;
+            background: #fff9e8;
+        }
+
+        .permission-choice:has(input:indeterminate) i {
+            border-color: #b58a24;
+            background: #f5d77d;
+            color: transparent;
+            font-size: 0;
+        }
+
+        .permission-choice:has(input:indeterminate) i::before {
+            color: #674b06;
+            content: '−';
+            font-size: 14px;
+        }
+
+        .permission-choice input:focus-visible ~ i {
+            outline: 3px solid rgba(36, 88, 73, .18);
+            outline-offset: 2px;
+        }
+
+        .permission-choice-disabled {
+            color: #a4ada8;
+            cursor: not-allowed;
+            opacity: .55;
+        }
+
+        .permission-choice-disabled:hover {
+            border-color: transparent;
+            background: transparent;
+        }
+
+        .permission-selection-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .permission-selection-footer strong {
+            color: var(--green);
+            font-size: 10px;
+            font-weight: 850;
+        }
+
+        @media (max-width: 1050px) {
+            .permission-module-simple {
+                grid-template-columns: minmax(145px, .7fr) minmax(0, 3.3fr);
+            }
+
+            .permission-options-row {
+                grid-template-columns: repeat(3, minmax(90px, 1fr));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .role-edit-page {
+                padding-right: 14px;
+                padding-left: 14px;
+            }
+
+            .role-edit-pagehead {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .role-edit-pagehead .actions,
+            .role-edit-pagehead .btn {
+                width: 100%;
+            }
+
+            .role-form-card {
+                padding: 16px;
+            }
+
+            .role-information-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .permission-section-heading {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .permission-global-actions {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                width: 100%;
+            }
+
+            .permission-text-button {
+                width: 100%;
+            }
+
+            .permission-module-simple {
+                grid-template-columns: 1fr;
+            }
+
+            .permission-module-label {
+                min-height: 46px;
+                padding: 12px 13px;
+                border-right: 0;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .permission-options-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                padding: 10px;
+            }
+
+            .permission-choice-label {
+                overflow: visible;
+                text-overflow: clip;
+                white-space: normal;
+            }
+
+            .role-form-footer {
+                align-items: stretch;
+                flex-direction: column-reverse;
+            }
+
+            .role-form-footer .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 390px) {
+            .role-form-card {
+                padding: 13px;
+            }
+
+            .permission-global-actions,
+            .permission-options-row {
+                grid-template-columns: 1fr;
+            }
+
+            .permission-choice {
+                min-height: 44px;
+            }
+
+            .permission-selection-footer {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+@endpush
+
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const roleForm = document.getElementById('roleEditForm');
+
+            if (!roleForm) {
+                return;
+            }
+
             const permissionItems = Array.from(
-                document.querySelectorAll('.permission-checkbox')
+                roleForm.querySelectorAll('.permission-checkbox')
             );
 
             const moduleAllItems = Array.from(
-                document.querySelectorAll('.module-all-checkbox')
+                roleForm.querySelectorAll('.module-all-checkbox')
             );
 
-            const selectionCount = document.getElementById(
-                'permissionSelectionCount'
+            const selectionCount = roleForm.querySelector(
+                '#permissionSelectionCount'
             );
 
-            const selectEverythingButton = document.getElementById(
-                'selectEverything'
+            const selectEverythingButton = roleForm.querySelector(
+                '#selectEverything'
             );
 
-            const clearEverythingButton = document.getElementById(
-                'clearEverything'
+            const clearEverythingButton = roleForm.querySelector(
+                '#clearEverything'
             );
 
             function getModuleItems(moduleName) {
@@ -324,10 +705,12 @@
                         '.permission-module-simple'
                     );
 
-                    moduleContainer?.classList.toggle(
-                        'has-selection',
-                        selectedItems.length > 0
-                    );
+                    if (moduleContainer) {
+                        moduleContainer.classList.toggle(
+                            'has-selection',
+                            selectedItems.length > 0
+                        );
+                    }
                 });
 
                 const totalSelected = permissionItems.filter(function (item) {
@@ -335,7 +718,9 @@
                 }).length;
 
                 if (selectionCount) {
-                    selectionCount.textContent = totalSelected + ' selected';
+                    selectionCount.textContent =
+                        totalSelected +
+                        (totalSelected === 1 ? ' selected' : ' selected');
                 }
             }
 
@@ -355,21 +740,25 @@
                 item.addEventListener('change', updateSelectionState);
             });
 
-            selectEverythingButton?.addEventListener('click', function () {
-                permissionItems.forEach(function (item) {
-                    item.checked = true;
+            if (selectEverythingButton) {
+                selectEverythingButton.addEventListener('click', function () {
+                    permissionItems.forEach(function (item) {
+                        item.checked = true;
+                    });
+
+                    updateSelectionState();
                 });
+            }
 
-                updateSelectionState();
-            });
+            if (clearEverythingButton) {
+                clearEverythingButton.addEventListener('click', function () {
+                    permissionItems.forEach(function (item) {
+                        item.checked = false;
+                    });
 
-            clearEverythingButton?.addEventListener('click', function () {
-                permissionItems.forEach(function (item) {
-                    item.checked = false;
+                    updateSelectionState();
                 });
-
-                updateSelectionState();
-            });
+            }
 
             updateSelectionState();
         });

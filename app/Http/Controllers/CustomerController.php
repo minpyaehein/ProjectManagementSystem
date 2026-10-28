@@ -112,7 +112,7 @@ class CustomerController extends Controller
         });
 
         return redirect()
-            ->route('customers.edit', $customer)
+            ->route('customersPage')
             ->with('success', 'Customer updated successfully.');
     }
 

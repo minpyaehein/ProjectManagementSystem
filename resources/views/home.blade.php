@@ -13,15 +13,6 @@
             $hour < 18 => 'Good afternoon',
             default => 'Good evening',
         };
-
-        $statusClass = static function (?string $status): string {
-            return match (strtolower(trim((string) $status))) {
-                'completed', 'payment' => 'dashboard-status-success',
-                'cancelled', 'lost' => 'dashboard-status-danger',
-                'proposal', 'negotiation', 'quotation' => 'dashboard-status-warning',
-                default => 'dashboard-status-info',
-            };
-        };
     @endphp
 
     <section class="content dashboard-page">
@@ -35,135 +26,215 @@
                     Here is the latest overview of your project management workspace.
                 </p>
             </div>
-
-
         </div>
 
         <div class="dashboard-stat-grid">
-            <a
-                class="card dashboard-stat-card"
-                href="{{ $currentUser->hasPermission('projects.view') ? route('projectsPage', ['record' => 'active']) : '#' }}"
-            >
-                <div class="dashboard-stat-top">
-                    <span>Active projects</span>
-                    <span class="dashboard-stat-icon" aria-hidden="true">▣</span>
-                </div>
-                <strong class="dashboard-stat-value">{{ number_format($activeProjectCount) }}</strong>
-                <span class="dashboard-stat-note">Currently active project records</span>
-            </a>
+            @if ($currentUser->hasPermission('projects.view'))
+                <a
+                    class="card dashboard-stat-card"
+                    href="{{ route('projectsPage', ['record' => 'active']) }}"
+                >
+                    <div class="dashboard-stat-top">
+                        <span>Active projects</span>
+                        <span class="dashboard-stat-icon" aria-hidden="true">▣</span>
+                    </div>
 
-            <a
-                class="card dashboard-stat-card"
-                href="{{ $currentUser->hasPermission('customers.view') ? route('customersPage') : '#' }}"
-            >
-                <div class="dashboard-stat-top">
-                    <span>Customers</span>
-                    <span class="dashboard-stat-icon" aria-hidden="true">♧</span>
-                </div>
-                <strong class="dashboard-stat-value">{{ number_format($customerCount) }}</strong>
-                <span class="dashboard-stat-note">Total customer records</span>
-            </a>
+                    <strong class="dashboard-stat-value">
+                        {{ number_format($activeProjectCount) }}
+                    </strong>
 
-            <a
-                class="card dashboard-stat-card"
-                href="{{ $currentUser->hasPermission('suppliers.view') ? route('suppliersPage') : '#' }}"
-            >
-                <div class="dashboard-stat-top">
-                    <span>Suppliers</span>
-                    <span class="dashboard-stat-icon" aria-hidden="true">◇</span>
-                </div>
-                <strong class="dashboard-stat-value">{{ number_format($supplierCount) }}</strong>
-                <span class="dashboard-stat-note">Registered supplier partners</span>
-            </a>
+                    <span class="dashboard-stat-note">
+                        Currently active project records
+                    </span>
+                </a>
+            @else
+                <div class="card dashboard-stat-card dashboard-stat-card-static">
+                    <div class="dashboard-stat-top">
+                        <span>Active projects</span>
+                        <span class="dashboard-stat-icon" aria-hidden="true">▣</span>
+                    </div>
 
-            <a
-                class="card dashboard-stat-card"
-                href="{{ $currentUser->hasPermission('users.view') ? route('usersPage', ['status' => 'Active']) : '#' }}"
-            >
-                <div class="dashboard-stat-top">
-                    <span>Active users</span>
-                    <span class="dashboard-stat-icon" aria-hidden="true">♙</span>
+                    <strong class="dashboard-stat-value">
+                        {{ number_format($activeProjectCount) }}
+                    </strong>
+
+                    <span class="dashboard-stat-note">
+                        Currently active project records
+                    </span>
                 </div>
-                <strong class="dashboard-stat-value">{{ number_format($activeUserCount) }}</strong>
-                <span class="dashboard-stat-note">
-                    Across {{ number_format($roleCount) }} {{ $roleCount === 1 ? 'role' : 'roles' }}
-                </span>
-            </a>
+            @endif
+
+            @if ($currentUser->hasPermission('customers.view'))
+                <a class="card dashboard-stat-card" href="{{ route('customersPage') }}">
+                    <div class="dashboard-stat-top">
+                        <span>Customers</span>
+                        <span class="dashboard-stat-icon" aria-hidden="true">♧</span>
+                    </div>
+
+                    <strong class="dashboard-stat-value">
+                        {{ number_format($customerCount) }}
+                    </strong>
+
+                    <span class="dashboard-stat-note">Total customer records</span>
+                </a>
+            @else
+                <div class="card dashboard-stat-card dashboard-stat-card-static">
+                    <div class="dashboard-stat-top">
+                        <span>Customers</span>
+                        <span class="dashboard-stat-icon" aria-hidden="true">♧</span>
+                    </div>
+
+                    <strong class="dashboard-stat-value">
+                        {{ number_format($customerCount) }}
+                    </strong>
+
+                    <span class="dashboard-stat-note">Total customer records</span>
+                </div>
+            @endif
+
+            @if ($currentUser->hasPermission('suppliers.view'))
+                <a class="card dashboard-stat-card" href="{{ route('suppliersPage') }}">
+                    <div class="dashboard-stat-top">
+                        <span>Suppliers</span>
+                        <span class="dashboard-stat-icon" aria-hidden="true">◇</span>
+                    </div>
+
+                    <strong class="dashboard-stat-value">
+                        {{ number_format($supplierCount) }}
+                    </strong>
+
+                    <span class="dashboard-stat-note">Registered supplier partners</span>
+                </a>
+            @else
+                <div class="card dashboard-stat-card dashboard-stat-card-static">
+                    <div class="dashboard-stat-top">
+                        <span>Suppliers</span>
+                        <span class="dashboard-stat-icon" aria-hidden="true">◇</span>
+                    </div>
+
+                    <strong class="dashboard-stat-value">
+                        {{ number_format($supplierCount) }}
+                    </strong>
+
+                    <span class="dashboard-stat-note">Registered supplier partners</span>
+                </div>
+            @endif
+
+            @if ($currentUser->hasPermission('users.view'))
+                <a
+                    class="card dashboard-stat-card"
+                    href="{{ route('usersPage', ['status' => 'Active']) }}"
+                >
+                    <div class="dashboard-stat-top">
+                        <span>Active users</span>
+                        <span class="dashboard-stat-icon" aria-hidden="true">♙</span>
+                    </div>
+
+                    <strong class="dashboard-stat-value">
+                        {{ number_format($activeUserCount) }}
+                    </strong>
+
+                    <span class="dashboard-stat-note">
+                        Across {{ number_format($roleCount) }}
+                        {{ $roleCount === 1 ? 'role' : 'roles' }}
+                    </span>
+                </a>
+            @else
+                <div class="card dashboard-stat-card dashboard-stat-card-static">
+                    <div class="dashboard-stat-top">
+                        <span>Active users</span>
+                        <span class="dashboard-stat-icon" aria-hidden="true">♙</span>
+                    </div>
+
+                    <strong class="dashboard-stat-value">
+                        {{ number_format($activeUserCount) }}
+                    </strong>
+
+                    <span class="dashboard-stat-note">
+                        Across {{ number_format($roleCount) }}
+                        {{ $roleCount === 1 ? 'role' : 'roles' }}
+                    </span>
+                </div>
+            @endif
         </div>
 
         <div class="dashboard-content-grid">
-            <section class="card dashboard-projects-card">
+            <section class="card dashboard-chart-card">
                 <div class="card-title dashboard-card-title">
                     <div>
-                        <h2>Recent projects</h2>
-                        <p>Latest project records in the workspace.</p>
+                        <h2>Monthly project report</h2>
+                        <p>Projects created during the latest six months.</p>
                     </div>
 
                     @if ($currentUser->hasPermission('projects.view'))
-                        <a href="{{ route('projectsPage') }}">View all →</a>
+                        <a href="{{ route('projectsPage') }}">View projects →</a>
                     @endif
                 </div>
 
-                <div class="table-wrap">
-                    <table class="dashboard-project-table">
-                        <thead>
-                            <tr>
-                                <th>Project</th>
-                                <th>End User</th>
-                                <th>Account Manager</th>
-                                <th>End Date</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
+                <div class="dashboard-chart-summary">
+                    <div>
+                        <span>Six-month total</span>
+                        <strong>{{ number_format($sixMonthProjectTotal) }}</strong>
+                    </div>
 
-                        <tbody>
-                            @forelse ($recentProjects as $project)
-                                <tr>
-                                    <td>
-                                        @if ($currentUser->hasPermission('projects.view'))
-                                            <a
-                                                class="item-name dashboard-project-link"
-                                                href="{{ route('projects.show', $project) }}"
-                                            >
-                                                {{ $project->name }}
-                                            </a>
-                                        @else
-                                            <span class="item-name">{{ $project->name }}</span>
-                                        @endif
-
-                                        <div class="small-muted">
-                                            PRJ-{{ str_pad((string) $project->project_id, 4, '0', STR_PAD_LEFT) }}
-                                        </div>
-                                    </td>
-
-                                    <td>{{ $project->customer?->name ?? 'Not provided' }}</td>
-                                    <td>{{ $project->accountManagerName ?: 'Not provided' }}</td>
-                                    <td>{{ $project->end_date?->format('M d, Y') ?? 'No deadline' }}</td>
-
-                                    <td>
-                                        <span class="dashboard-status {{ $statusClass($project->status) }}">
-                                            {{ $project->status ?: 'Not set' }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5">
-                                        <div class="dashboard-empty-state">
-                                            <strong>No projects found.</strong>
-
-                                            @if ($currentUser->hasPermission('projects.create'))
-                                                <a class="btn btn-primary" href="{{ route('project-create') }}">
-                                                    ＋ Create project
-                                                </a>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                    <div>
+                        <span>Highest month</span>
+                        <strong>{{ number_format($monthlyProjectMaximum) }}</strong>
+                    </div>
                 </div>
+
+                <div
+                    class="dashboard-bar-chart"
+                    role="img"
+                    aria-label="Bar chart showing projects created each month during the latest six months"
+                >
+                    <div class="dashboard-chart-grid" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+
+                    <div class="dashboard-bars">
+                        @foreach ($monthlyProjectReport as $month)
+                            @php
+                                $height = $month['count'] > 0
+                                    ? max(
+                                        10,
+                                        (int) round(
+                                            ($month['count'] / $monthlyProjectMaximum) * 100
+                                        )
+                                    )
+                                    : 3;
+                            @endphp
+
+                            <div class="dashboard-bar-column">
+                                <div class="dashboard-bar-value">
+                                    {{ number_format($month['count']) }}
+                                </div>
+
+                                <div
+                                    class="dashboard-bar-track"
+                                    title="{{ $month['full_label'] }}: {{ $month['count'] }} projects"
+                                >
+                                    <div
+                                        class="dashboard-bar-fill {{ $month['count'] === 0 ? 'is-empty' : '' }}"
+                                        style="height: {{ $height }}%"
+                                    ></div>
+                                </div>
+
+                                <div class="dashboard-bar-label">
+                                    <strong>{{ $month['label'] }}</strong>
+                                    <span>{{ substr($month['key'], 0, 4) }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <p class="dashboard-chart-note">
+                    Counts are based on each project's creation date.
+                </p>
             </section>
 
             <aside class="dashboard-side-column">
@@ -192,7 +263,9 @@
 
                                 <div>
                                     <strong>{{ $customer->name }}</strong>
-                                    <span>{{ $customer->contact_person ?: 'No primary contact' }}</span>
+                                    <span>
+                                        {{ $customer->contact_person ?: 'No primary contact' }}
+                                    </span>
                                 </div>
                             </div>
                         @empty
@@ -211,7 +284,10 @@
 
                         @forelse ($recentSuppliers as $supplier)
                             <div class="dashboard-directory-item">
-                                <span class="dashboard-directory-avatar supplier" aria-hidden="true">
+                                <span
+                                    class="dashboard-directory-avatar supplier"
+                                    aria-hidden="true"
+                                >
                                     {{ strtoupper(mb_substr($supplier->name, 0, 1)) }}
                                 </span>
 
@@ -302,20 +378,20 @@
 
         .dashboard-stat-card {
             display: block;
+            min-width: 0;
             color: inherit;
             text-decoration: none;
             transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
         }
 
-        .dashboard-stat-card[href="#"] {
-            cursor: default;
-            pointer-events: none;
-        }
-
-        .dashboard-stat-card:hover {
+        a.dashboard-stat-card:hover {
             border-color: #bdd5c9;
             box-shadow: 0 14px 34px rgba(21, 54, 43, .11);
             transform: translateY(-2px);
+        }
+
+        .dashboard-stat-card-static {
+            cursor: default;
         }
 
         .dashboard-stat-top {
@@ -330,6 +406,7 @@
 
         .dashboard-stat-icon {
             display: grid;
+            flex: 0 0 30px;
             width: 30px;
             height: 30px;
             border-radius: 9px;
@@ -348,9 +425,11 @@
         }
 
         .dashboard-stat-note {
+            display: block;
             color: var(--green2);
             font-size: 9px;
             font-weight: 700;
+            line-height: 1.45;
         }
 
         .dashboard-content-grid {
@@ -374,50 +453,148 @@
             font-size: 10px;
         }
 
-        .dashboard-project-link {
-            color: var(--green);
+        .dashboard-chart-card {
+            min-width: 0;
         }
 
-        .dashboard-status {
-            display: inline-flex;
-            align-items: center;
-            min-height: 24px;
-            padding: 0 8px;
-            border-radius: 999px;
+        .dashboard-chart-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .dashboard-chart-summary > div {
+            min-width: 120px;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #fafcfb;
+        }
+
+        .dashboard-chart-summary span {
+            display: block;
+            color: var(--muted);
             font-size: 8px;
-            font-weight: 850;
-            white-space: nowrap;
+            font-weight: 800;
+            text-transform: uppercase;
         }
 
-        .dashboard-status-success {
-            background: #e8f6ed;
-            color: #237046;
+        .dashboard-chart-summary strong {
+            display: block;
+            margin-top: 4px;
+            color: var(--green);
+            font-size: 17px;
         }
 
-        .dashboard-status-danger {
-            background: #fff0ef;
-            color: #a83a35;
+        .dashboard-bar-chart {
+            position: relative;
+            min-height: 300px;
+            padding: 20px 12px 0;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 13px;
+            background: linear-gradient(180deg, #fbfdfc 0%, #f6faf7 100%);
         }
 
-        .dashboard-status-warning {
-            background: #fff6df;
-            color: #86611b;
+        .dashboard-chart-grid {
+            position: absolute;
+            z-index: 0;
+            inset: 22px 12px 54px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none;
         }
 
-        .dashboard-status-info {
-            background: #edf4f8;
-            color: #315f79;
+        .dashboard-chart-grid span {
+            display: block;
+            width: 100%;
+            border-top: 1px dashed #dbe5df;
         }
 
-        .dashboard-empty-state {
+        .dashboard-bars {
+            position: relative;
+            z-index: 1;
             display: grid;
-            justify-items: center;
-            gap: 12px;
-            padding: 28px;
+            grid-template-columns: repeat(6, minmax(48px, 1fr));
+            align-items: end;
+            gap: clamp(8px, 2vw, 20px);
+            min-width: 430px;
+            height: 275px;
+        }
+
+        .dashboard-bar-column {
+            display: grid;
+            grid-template-rows: 24px minmax(170px, 1fr) 44px;
+            align-items: end;
+            min-width: 0;
+            height: 100%;
+        }
+
+        .dashboard-bar-value {
+            padding-bottom: 5px;
+            color: var(--green);
+            font-size: 10px;
+            font-weight: 850;
+            text-align: center;
+        }
+
+        .dashboard-bar-track {
+            position: relative;
+            width: min(52px, 74%);
+            height: 100%;
+            margin: 0 auto;
+            overflow: hidden;
+            border-radius: 10px 10px 4px 4px;
+            background: rgba(36, 88, 73, .07);
+        }
+
+        .dashboard-bar-fill {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            min-height: 5px;
+            border-radius: 10px 10px 4px 4px;
+            background: linear-gradient(180deg, #3f8c72 0%, var(--green) 100%);
+        }
+
+        .dashboard-bar-fill.is-empty {
+            background: #cfd9d3;
+        }
+
+        .dashboard-bar-label {
+            padding-top: 8px;
+            text-align: center;
+        }
+
+        .dashboard-bar-label strong,
+        .dashboard-bar-label span {
+            display: block;
+        }
+
+        .dashboard-bar-label strong {
+            color: var(--ink);
+            font-size: 10px;
+        }
+
+        .dashboard-bar-label span {
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 8px;
+        }
+
+        .dashboard-chart-note {
+            margin: 10px 0 0;
+            color: var(--muted);
+            font-size: 9px;
+            line-height: 1.5;
         }
 
         .dashboard-side-column {
             display: grid;
+            min-width: 0;
             gap: 18px;
         }
 
@@ -431,6 +608,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 10px;
             margin-bottom: 10px;
         }
 
@@ -459,13 +637,13 @@
             width: 36px;
             height: 36px;
             margin: 0 !important;
+            overflow: visible !important;
             border-radius: 10px;
             background: var(--mint);
             color: var(--green) !important;
             font-size: 11px !important;
             font-weight: 850;
             line-height: 1;
-            overflow: visible !important;
             place-items: center;
             text-align: center;
             text-overflow: clip !important;
@@ -474,15 +652,13 @@
 
         .dashboard-directory-avatar.supplier {
             background: #fff5df;
-            color: #86611b;
+            color: #86611b !important;
         }
 
         .dashboard-directory-item > div {
             min-width: 0;
         }
 
-        /* Scope text truncation to the text column only.
-           Do not apply these rules to the avatar span. */
         .dashboard-directory-item > div strong,
         .dashboard-directory-item > div span {
             display: block;
@@ -545,10 +721,6 @@
             font-weight: 800;
         }
 
-        .dashboard-project-summary-heading > a:hover {
-            text-decoration: underline;
-        }
-
         .dashboard-project-summary-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -566,13 +738,6 @@
             background: var(--white);
             color: inherit;
             text-decoration: none;
-            transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
-        }
-
-        a.dashboard-project-summary-item:hover {
-            border-color: #b9d4c6;
-            box-shadow: 0 8px 20px rgba(21, 54, 43, .08);
-            transform: translateY(-1px);
         }
 
         .dashboard-summary-icon {
@@ -600,15 +765,18 @@
             min-width: 0;
         }
 
-        .dashboard-project-summary-item strong {
+        .dashboard-project-summary-item strong,
+        .dashboard-project-summary-item small {
             display: block;
+        }
+
+        .dashboard-project-summary-item strong {
             color: var(--ink);
             font-size: 16px;
             line-height: 1;
         }
 
         .dashboard-project-summary-item small {
-            display: block;
             margin-top: 4px;
             color: var(--muted);
             font-size: 9px;
@@ -646,13 +814,40 @@
             }
         }
 
-        @media (max-width: 620px) {
+        @media (max-width: 720px) {
+            .dashboard-page {
+                padding-right: 14px;
+                padding-left: 14px;
+            }
+
             .dashboard-stat-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .dashboard-stat-card {
+                padding: 14px;
+            }
+
+            .dashboard-bar-chart {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .dashboard-stat-grid,
+            .dashboard-project-summary-grid {
                 grid-template-columns: 1fr;
             }
 
-            .dashboard-project-summary-grid {
-                grid-template-columns: 1fr;
+            .dashboard-chart-summary {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .dashboard-chart-summary > div {
+                min-width: 0;
             }
         }
     </style>

@@ -1,7 +1,8 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\LoginController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectFinancialItemController;
@@ -9,13 +10,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
 
-
-Route::middleware('guest')->group(function (): void {
-    Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'authenticate'])->name('login-form');
-});
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/home', [HomeController::class, 'index'])
@@ -173,8 +168,19 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/activity', fn() => view('activity-logs'))
         ->middleware('permission:logs.view')->name('activityPage');
 
-    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });
+
+Route::middleware('guest')->group(function (): void {
+    Route::get('/login', [AuthController::class, 'showLogin'])
+        ->name('login');
+
+    Route::post('/login', [AuthController::class, 'login'])
+        ->name('login-form');
+});
+
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
 
 Route::middleware(['auth', 'permission:projects.edit'])->group(function (): void {
     Route::post('/projects/{project}/costs', [ProjectFinancialItemController::class, 'storeCost'])

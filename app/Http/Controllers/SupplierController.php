@@ -117,7 +117,7 @@ class SupplierController extends Controller
             $this->syncLegacyPrimaryFields($supplier);
         });
 
-        return redirect()->route('suppliers.edit', $supplier)->with('success', 'Supplier updated successfully.');
+        return redirect()->route('suppliersPage')->with('success', 'Supplier updated successfully.');
     }
 
     public function deactivate(Supplier $supplier): RedirectResponse

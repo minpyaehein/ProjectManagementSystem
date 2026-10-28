@@ -201,7 +201,7 @@ class UserController extends Controller
         $user->update($validated);
 
         return redirect()
-            ->route('users.edit', $user)
+            ->route('usersPage')
             ->with('success', 'User updated successfully.');
     }
 

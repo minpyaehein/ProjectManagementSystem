@@ -22,22 +22,14 @@ class HomeController extends Controller
             ->count();
 
         $totalProjectCount = Project::query()->count();
-
         $customerCount = Customer::query()->count();
         $supplierCount = Supplier::query()->count();
+
         $activeUserCount = User::query()
             ->where('status', 'Active')
             ->count();
-        $roleCount = Role::query()->count();
 
-        $recentProjects = Project::query()
-            ->with([
-                'customer',
-                'supplier',
-            ])
-            ->latest('created_at')
-            ->limit(5)
-            ->get();
+        $roleCount = Role::query()->count();
 
         $recentCustomers = Customer::query()
             ->latest('created_at')
@@ -49,6 +41,38 @@ class HomeController extends Controller
             ->limit(3)
             ->get();
 
+        $monthStart = now()->startOfMonth()->subMonths(5);
+
+        $projectCountsByMonth = Project::query()
+            ->where('created_at', '>=', $monthStart)
+            ->get(['project_id', 'created_at'])
+            ->countBy(fn (Project $project): string =>
+                $project->created_at->format('Y-m')
+            );
+
+        $monthlyProjectReport = collect(range(0, 5))
+            ->map(function (int $offset) use (
+                $monthStart,
+                $projectCountsByMonth
+            ): array {
+                $month = $monthStart->copy()->addMonths($offset);
+                $key = $month->format('Y-m');
+
+                return [
+                    'key' => $key,
+                    'label' => $month->format('M'),
+                    'full_label' => $month->format('F Y'),
+                    'count' => (int) ($projectCountsByMonth[$key] ?? 0),
+                ];
+            });
+
+        $monthlyProjectMaximum = max(
+            0,
+            (int) $monthlyProjectReport->max('count')
+        );
+
+        $sixMonthProjectTotal = (int) $monthlyProjectReport->sum('count');
+
         return view(
             'home',
             compact(
@@ -59,9 +83,11 @@ class HomeController extends Controller
                 'supplierCount',
                 'activeUserCount',
                 'roleCount',
-                'recentProjects',
                 'recentCustomers',
-                'recentSuppliers'
+                'recentSuppliers',
+                'monthlyProjectReport',
+                'monthlyProjectMaximum',
+                'sixMonthProjectTotal'
             )
         );
     }

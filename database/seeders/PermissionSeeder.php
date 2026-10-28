@@ -10,8 +10,13 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            /*
+             * Projects
+             *
+             * Projects intentionally do not use a Deactivate permission.
+             */
             [
-                'name' => 'Read Projects',
+                'name' => 'View Projects',
                 'slug' => 'projects.view',
             ],
             [
@@ -19,59 +24,123 @@ class PermissionSeeder extends Seeder
                 'slug' => 'projects.create',
             ],
             [
-                'name' => 'Create / Edit Projects',
+                'name' => 'Edit Projects',
                 'slug' => 'projects.edit',
             ],
             [
-                'name' => 'Deactivate / Reactivate Projects',
-                'slug' => 'projects.deactivate',
+                'name' => 'Export Projects',
+                'slug' => 'projects.export',
             ],
+
+            /*
+             * Customers
+             */
             [
-                'name' => 'Read Customers',
+                'name' => 'View Customers',
                 'slug' => 'customers.view',
             ],
             [
-                'name' => 'Create / Edit Customers',
+                'name' => 'Create Customers',
+                'slug' => 'customers.create',
+            ],
+            [
+                'name' => 'Edit Customers',
                 'slug' => 'customers.edit',
             ],
             [
-                'name' => 'Deactivate / Reactivate Customers',
+                'name' => 'Deactivate or Reactivate Customers',
                 'slug' => 'customers.deactivate',
             ],
+
+            /*
+             * Suppliers
+             */
             [
-                'name' => 'Read Suppliers',
+                'name' => 'View Suppliers',
                 'slug' => 'suppliers.view',
             ],
             [
-                'name' => 'Create / Edit Suppliers',
+                'name' => 'Create Suppliers',
+                'slug' => 'suppliers.create',
+            ],
+            [
+                'name' => 'Edit Suppliers',
                 'slug' => 'suppliers.edit',
             ],
             [
-                'name' => 'Deactivate / Reactivate Suppliers',
+                'name' => 'Deactivate or Reactivate Suppliers',
                 'slug' => 'suppliers.deactivate',
             ],
+
+            /*
+             * Users
+             */
+            [
+                'name' => 'View Users',
+                'slug' => 'users.view',
+            ],
+            [
+                'name' => 'Create Users',
+                'slug' => 'users.create',
+            ],
+            [
+                'name' => 'Edit Users',
+                'slug' => 'users.edit',
+            ],
+            [
+                'name' => 'Deactivate or Reactivate Users',
+                'slug' => 'users.deactivate',
+            ],
+            [
+                'name' => 'Reset User Passwords',
+                'slug' => 'users.reset-password',
+            ],
+
+            /*
+             * Roles and permissions
+             */
+            [
+                'name' => 'View Roles',
+                'slug' => 'roles.view',
+            ],
+            [
+                'name' => 'Create Roles',
+                'slug' => 'roles.create',
+            ],
+            [
+                'name' => 'Edit Roles',
+                'slug' => 'roles.edit',
+            ],
+            [
+                'name' => 'Deactivate or Reactivate Roles',
+                'slug' => 'roles.deactivate',
+            ],
+
+            /*
+             * Project tasks and financial records
+             */
             [
                 'name' => 'Manage Project Tasks',
                 'slug' => 'project-tasks.manage',
             ],
             [
-                'name' => 'Manage Revenue',
+                'name' => 'Manage Project Financials',
                 'slug' => 'project-financials.manage',
             ],
+
+            /*
+             * Activity logs
+             */
             [
-                'name' => 'Print / Export Project List',
-                'slug' => 'projects.export',
+                'name' => 'View Activity Logs',
+                'slug' => 'logs.view',
             ],
+
+            /*
+             * Full administration access
+             */
             [
-                'name' => 'Manage Users',
-                'slug' => 'users.manage',
-            ],
-            [
-                'name' => 'Manage Roles',
-                'slug' => 'roles.manage',
-            ],
-            [
-                'name' => 'Full Admin',
+                'name' => 'Full Administrator Access',
                 'slug' => 'admin.full',
             ],
         ];
