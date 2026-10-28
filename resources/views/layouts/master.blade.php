@@ -79,7 +79,7 @@
                         href="{{ route('usersPage') }}"
                     >
                         <span class="nav-icon" aria-hidden="true"></span>
-                        <span>Users</span>
+                        <span>Users Management</span>
                     </a>
                 @endif
 
