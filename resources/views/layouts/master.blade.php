@@ -37,7 +37,7 @@
                     class="{{ request()->routeIs('homePage') ? 'active' : '' }}"
                     href="{{ route('homePage') }}"
                 >
-                    <span class="nav-icon" aria-hidden="true">⌂</span>
+                    <span class="nav-icon" aria-hidden="true"></span>
                     <span>Dashboard</span>
                 </a>
 
@@ -46,7 +46,7 @@
                         class="{{ request()->routeIs('projectsPage', 'projects.*', 'project-create') ? 'active' : '' }}"
                         href="{{ route('projectsPage') }}"
                     >
-                        <span class="nav-icon" aria-hidden="true">▣</span>
+                        <span class="nav-icon" aria-hidden="true"></span>
                         <span>Projects</span>
                     </a>
                 @endif
@@ -56,7 +56,7 @@
                         class="{{ request()->routeIs('customersPage', 'customers.*') ? 'active' : '' }}"
                         href="{{ route('customersPage') }}"
                     >
-                        <span class="nav-icon" aria-hidden="true">♧</span>
+                        <span class="nav-icon" aria-hidden="true"></span>
                         <span>Customers</span>
                     </a>
                 @endif
@@ -66,7 +66,7 @@
                         class="{{ request()->routeIs('suppliersPage', 'suppliers.*') ? 'active' : '' }}"
                         href="{{ route('suppliersPage') }}"
                     >
-                        <span class="nav-icon" aria-hidden="true">◇</span>
+                        <span class="nav-icon" aria-hidden="true"></span>
                         <span>Suppliers</span>
                     </a>
                 @endif
@@ -78,7 +78,7 @@
                         class="{{ request()->routeIs('usersPage', 'users.*') ? 'active' : '' }}"
                         href="{{ route('usersPage') }}"
                     >
-                        <span class="nav-icon" aria-hidden="true">♙</span>
+                        <span class="nav-icon" aria-hidden="true"></span>
                         <span>Users</span>
                     </a>
                 @endif
@@ -88,7 +88,7 @@
                         class="{{ request()->routeIs('rolesPage', 'roles.*') ? 'active' : '' }}"
                         href="{{ route('rolesPage') }}"
                     >
-                        <span class="nav-icon" aria-hidden="true">◆</span>
+                        <span class="nav-icon" aria-hidden="true"></span>
                         <span>Roles &amp; Permissions</span>
                     </a>
                 @endif
