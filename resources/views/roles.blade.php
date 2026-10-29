@@ -34,47 +34,26 @@
         @endif
 
         <div class="card roles-card">
-            <form
-                class="toolbar roles-toolbar"
-                id="roleFilterForm"
-                method="GET"
-                action="{{ route('rolesPage') }}"
-            >
+            <form class="toolbar roles-toolbar" id="roleFilterForm" method="GET" action="{{ route('rolesPage') }}">
                 <div class="role-search-group">
                     <label class="sr-only" for="roleSearch">Search roles</label>
 
-                    <input
-                        class="search"
-                        id="roleSearch"
-                        name="search"
-                        type="search"
-                        value="{{ request('search') }}"
-                        placeholder="Search roles..."
-                        autocomplete="off"
-                        aria-label="Search roles"
-                    >
+                    <input class="search" id="roleSearch" name="search" type="search" value="{{ request('search') }}"
+                        placeholder="Search roles..." autocomplete="off" aria-label="Search roles">
 
                     <button class="btn role-search-button btn-primary" type="submit">
                         Search
                     </button>
 
                     @if (request()->filled('search'))
-                        <a
-                            class="btn role-clear-button"
-                            href="{{ route('rolesPage') }}"
-                        >
+                        <a class="btn role-clear-button" href="{{ route('rolesPage') }}">
                             Clear
                         </a>
                     @endif
                 </div>
             </form>
 
-            <div
-                class="role-filter-progress"
-                id="roleFilterProgress"
-                role="status"
-                hidden
-            >
+            <div class="role-filter-progress" id="roleFilterProgress" role="status" hidden>
                 Updating role results...
             </div>
 
@@ -107,10 +86,7 @@
                                     </td>
 
                                     <td>
-                                        <span
-                                            class="role-description"
-                                            title="{{ $role->description ?: 'No description' }}"
-                                        >
+                                        <span class="role-description" title="{{ $role->description ?: 'No description' }}">
                                             {{ $role->description ?: 'No description' }}
                                         </span>
                                     </td>
@@ -128,43 +104,49 @@
                                     <td>
                                         <div class="table-actions">
                                             @if (auth()->user()->hasPermission('roles.view'))
-                                                <a
-                                                    class="action-btn action-view"
-                                                    href="{{ route('roles.show', $role) }}"
-                                                >
+                                                <a class="action-btn action-view" href="{{ route('roles.show', $role) }}">
                                                     View
                                                 </a>
                                             @endif
 
                                             @if (auth()->user()->hasPermission('roles.edit'))
-                                                <a
-                                                    class="action-btn action-edit"
-                                                    href="{{ route('roles.edit', $role) }}"
-                                                >
+                                                <a class="action-btn action-edit" href="{{ route('roles.edit', $role) }}">
                                                     Edit
                                                 </a>
                                             @endif
 
-                                            @if (
-                                                auth()->user()->hasPermission('roles.deactivate')
-                                                && (int) $role->users_count === 0
-                                                && ($role->status ?? 'Active') !== 'Inactive'
-                                            )
-                                                <form
-                                                    action="{{ route('roles.deactivate', $role) }}"
+                                            @if (auth()->user()->hasPermission('roles.deactivate'))
+                                                @if (($role->status ?? 'Active') === 'Inactive')
+                                                    <form action="{{ route('roles.activate', $role) }}"
                                                     method="POST"
-                                                    onsubmit="return confirm('Deactivate this role?');"
-                                                >
+                                                    onsubmit="return confirm('Activate this role?');"
+                                                    >
                                                     @csrf
                                                     @method('PATCH')
 
-                                                    <button
-                                                        class="action-btn action-delete"
-                                                        type="submit"
+                                                    <button class="action-btn action-view" type="submit">
+                                                        Activate
+                                                    </button>
+                                                    </form>
+                                                @elseif ((int) $role->users_count === 0 && (int) auth()->user()->role_id !== (int) $role->role_id)
+                                                    <form action="{{ route('roles.deactivate', $role) }}"
+                                                    method="POST"
+                                                    onsubmit="return confirm('Deactivate this role?');"
                                                     >
+                                                    @csrf
+                                                    @method('PATCH')
+
+                                                    <button class="action-btn action-delete" type="submit">
                                                         Deactivate
                                                     </button>
-                                                </form>
+                                                    </form>
+                                                @elseif ((int) $role->users_count > 0)
+                                                    <span class="action-btn action-disabled"
+                                                        title="Roles assigned to users cannot be deactivated."
+                                                        aria-disabled="true">
+                                                        In use
+                                                    </span>
+                                                @endif
                                             @endif
                                         </div>
                                     </td>
@@ -184,10 +166,7 @@
                                                 <p>Create a role to display it here.</p>
 
                                                 @if (auth()->user()->hasPermission('roles.create'))
-                                                    <a
-                                                        class="btn btn-primary"
-                                                        href="{{ route('roles.create') }}"
-                                                    >
+                                                    <a class="btn btn-primary" href="{{ route('roles.create') }}">
                                                         ＋ Create role
                                                     </a>
                                                 @endif
@@ -280,7 +259,10 @@
             min-width: 920px;
         }
 
-        .roles-table th:last-child,
+        .roles-table th:last-child {
+            text-align: center;
+        }
+
         .roles-table td:last-child {
             text-align: right;
         }

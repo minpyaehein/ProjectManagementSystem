@@ -165,16 +165,30 @@
                                                 </a>
                                             @endif
 
-                                            @if (auth()->user()->hasPermission('suppliers.deactivate') && $supplier->status !== 'Inactive')
-                                                <form action="{{ route('suppliers.deactivate', $supplier) }}"
-                                                    method="POST" onsubmit="return confirm('Deactivate this supplier?');">
-                                                    @csrf
-                                                    @method('PATCH')
+                                            @if (auth()->user()->hasPermission('suppliers.deactivate'))
+                                                @if ($supplier->status === 'Inactive')
+                                                    <form action="{{ route('suppliers.activate', $supplier) }}"
+                                                        method="POST"
+                                                        onsubmit="return confirm('Activate this supplier?');">
+                                                        @csrf
+                                                        @method('PATCH')
 
-                                                    <button class="action-btn action-delete" type="submit">
-                                                        Deactivate
-                                                    </button>
-                                                </form>
+                                                        <button class="action-btn action-view" type="submit">
+                                                            Activate
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <form action="{{ route('suppliers.deactivate', $supplier) }}"
+                                                        method="POST"
+                                                        onsubmit="return confirm('Deactivate this supplier?');">
+                                                        @csrf
+                                                        @method('PATCH')
+
+                                                        <button class="action-btn action-delete" type="submit">
+                                                            Deactivate
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             @endif
                                         </div>
                                     </td>
@@ -275,7 +289,10 @@
             min-width: 1000px;
         }
 
-        .suppliers-table th:last-child,
+        .suppliers-table th:last-child {
+            text-align: center;
+        }
+
         .suppliers-table td:last-child {
             text-align: right;
         }

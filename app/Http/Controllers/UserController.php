@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Role;
@@ -61,19 +60,19 @@ class UserController extends Controller
     {
         $validated = $request->validate(
             [
-                'name' => [
+                'name'     => [
                     'required',
                     'string',
                     'max:255',
                     Rule::unique('users', 'name'),
                 ],
-                'email' => [
+                'email'    => [
                     'nullable',
                     'email',
                     'max:255',
                     Rule::unique('users', 'email'),
                 ],
-                'phone' => [
+                'phone'    => [
                     'nullable',
                     'string',
                     'max:30',
@@ -85,28 +84,28 @@ class UserController extends Controller
                     'min:8',
                     'confirmed',
                 ],
-                'role_id' => [
+                'role_id'  => [
                     'required',
                     'integer',
                     Rule::exists('role', 'role_id'),
                 ],
-                'status' => [
+                'status'   => [
                     'required',
                     Rule::in(['Active', 'Inactive']),
                 ],
             ],
             [
-                'name.required' => 'Please enter the user name.',
-                'name.unique' => 'This login name is already being used.',
-                'email.email' => 'Please enter a valid email address.',
-                'email.unique' => 'This email address is already being used.',
-                'phone.regex' => 'The phone number may contain only numbers, spaces, +, -, and parentheses.',
-                'password.required' => 'Please enter a password.',
-                'password.min' => 'The password must contain at least 8 characters.',
+                'name.required'      => 'Please enter the user name.',
+                'name.unique'        => 'This login name is already being used.',
+                'email.email'        => 'Please enter a valid email address.',
+                'email.unique'       => 'This email address is already being used.',
+                'phone.regex'        => 'The phone number may contain only numbers, spaces, +, -, and parentheses.',
+                'password.required'  => 'Please enter a password.',
+                'password.min'       => 'The password must contain at least 8 characters.',
                 'password.confirmed' => 'The password confirmation does not match.',
-                'role_id.required' => 'Please select a role.',
-                'role_id.exists' => 'The selected role does not exist.',
-                'status.required' => 'Please select a user status.',
+                'role_id.required'   => 'Please select a role.',
+                'role_id.exists'     => 'The selected role does not exist.',
+                'status.required'    => 'Please select a user status.',
             ]
         );
 
@@ -142,21 +141,21 @@ class UserController extends Controller
     {
         $validated = $request->validate(
             [
-                'name' => [
+                'name'     => [
                     'required',
                     'string',
                     'max:255',
                     Rule::unique('users', 'name')
                         ->ignore($user->user_id, 'user_id'),
                 ],
-                'email' => [
+                'email'    => [
                     'nullable',
                     'email',
                     'max:255',
                     Rule::unique('users', 'email')
                         ->ignore($user->user_id, 'user_id'),
                 ],
-                'phone' => [
+                'phone'    => [
                     'nullable',
                     'string',
                     'max:30',
@@ -168,31 +167,31 @@ class UserController extends Controller
                     'min:8',
                     'confirmed',
                 ],
-                'role_id' => [
+                'role_id'  => [
                     'required',
                     'integer',
                     Rule::exists('role', 'role_id'),
                 ],
-                'status' => [
+                'status'   => [
                     'required',
                     Rule::in(['Active', 'Inactive']),
                 ],
             ],
             [
-                'name.required' => 'Please enter the user name.',
-                'name.unique' => 'This login name is already being used.',
-                'email.email' => 'Please enter a valid email address.',
-                'email.unique' => 'This email address is already being used.',
-                'phone.regex' => 'The phone number may contain only numbers, spaces, +, -, and parentheses.',
-                'password.min' => 'The password must contain at least 8 characters.',
+                'name.required'      => 'Please enter the user name.',
+                'name.unique'        => 'This login name is already being used.',
+                'email.email'        => 'Please enter a valid email address.',
+                'email.unique'       => 'This email address is already being used.',
+                'phone.regex'        => 'The phone number may contain only numbers, spaces, +, -, and parentheses.',
+                'password.min'       => 'The password must contain at least 8 characters.',
                 'password.confirmed' => 'The password confirmation does not match.',
-                'role_id.required' => 'Please select a role.',
-                'role_id.exists' => 'The selected role does not exist.',
-                'status.required' => 'Please select a user status.',
+                'role_id.required'   => 'Please select a role.',
+                'role_id.exists'     => 'The selected role does not exist.',
+                'status.required'    => 'Please select a user status.',
             ]
         );
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
@@ -209,7 +208,7 @@ class UserController extends Controller
     {
         abort_unless(
             $request->user()->hasPermission('users.edit')
-                || $request->user()->hasPermission('users.manage'),
+            || $request->user()->hasPermission('users.manage'),
             403
         );
 
@@ -237,6 +236,41 @@ class UserController extends Controller
         $user->update(['status' => 'Inactive']);
 
         return back()->with('success', 'User deactivated successfully.');
+    }
+
+    public function activate(
+        Request $request,
+        User $user
+    ): RedirectResponse {
+        abort_unless(
+            $request->user()->hasPermission(
+                'users.deactivate'
+            ),
+            403
+        );
+
+        if ($user->is($request->user())) {
+            return back()->with(
+                'error',
+                'You cannot change your own account status.'
+            );
+        }
+
+        if ($user->status === 'Active') {
+            return back()->with(
+                'error',
+                'User is already active.'
+            );
+        }
+
+        $user->update([
+            'status' => 'Active',
+        ]);
+
+        return back()->with(
+            'success',
+            'User activated successfully.'
+        );
     }
 
     public function destroy(User $user): RedirectResponse

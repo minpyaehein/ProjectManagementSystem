@@ -96,6 +96,19 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('permission:customers.view')
         ->name('customers.show');
 
+    Route::patch(
+        '/customers/{customer}/activate',
+        [
+            CustomerController::class,
+            'activate',
+        ]
+    )
+        ->middleware([
+            'auth',
+            'permission:customers.deactivate',
+        ])
+        ->name('customers.activate');
+
     // Suppliers
     Route::get('/suppliers', [SupplierController::class, 'index'])
         ->middleware('permission:suppliers.view')->name('suppliersPage');
@@ -116,6 +129,16 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('permission:suppliers.view')
         ->name('suppliers.show');
 
+    Route::patch(
+        '/suppliers/{supplier}/activate',
+        [SupplierController::class, 'activate']
+    )
+        ->middleware([
+            'auth',
+            'permission:suppliers.deactivate',
+        ])
+        ->name('suppliers.activate');
+
     // Users
     Route::get('/users', [UserController::class, 'index'])
         ->middleware('permission:users.view')->name('usersPage');
@@ -129,6 +152,14 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('permission:users.edit')->name('users.update');
     Route::patch('/users/{user}/deactivate', [UserController::class, 'deactivate'])
         ->middleware('permission:users.deactivate')->name('users.deactivate');
+
+    Route::patch(
+        '/users/{user}/activate',
+        [UserController::class, 'activate']
+    )
+        ->middleware('permission:users.deactivate')
+        ->name('users.activate');
+
     Route::get(
         '/users/{user}',
         [UserController::class, 'show']

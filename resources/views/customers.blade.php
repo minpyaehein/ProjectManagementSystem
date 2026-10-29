@@ -14,10 +14,7 @@
 
             <div class="actions">
                 @if (auth()->user()->hasPermission('customers.create'))
-                    <a
-                        class="btn btn-primary"
-                        href="{{ route('customers.create') }}"
-                    >
+                    <a class="btn btn-primary" href="{{ route('customers.create') }}">
                         ＋ Create customer
                     </a>
                 @endif
@@ -37,40 +34,23 @@
         @endif
 
         <div class="card customers-card">
-            <form
-                class="toolbar customer-filter-form"
-                id="customerFilterForm"
-                action="{{ route('customersPage') }}"
-                method="GET"
-            >
+            <form class="toolbar customer-filter-form" id="customerFilterForm" action="{{ route('customersPage') }}"
+                method="GET">
                 <div class="customer-search-group">
                     <label class="sr-only" for="customerSearch">
                         Search customers
                     </label>
 
-                    <input
-                        class="search"
-                        id="customerSearch"
-                        name="search"
-                        type="search"
-                        value="{{ request('search') }}"
-                        placeholder="Search customers or contacts..."
-                        autocomplete="off"
-                        aria-label="Search customers or contacts"
-                    >
+                    <input class="search" id="customerSearch" name="search" type="search" value="{{ request('search') }}"
+                        placeholder="Search customers or contacts..." autocomplete="off"
+                        aria-label="Search customers or contacts">
 
-                    <button
-                        class="btn customer-search-button btn-primary"
-                        type="submit"
-                    >
+                    <button class="btn customer-search-button btn-primary" type="submit">
                         Search
                     </button>
 
                     @if (request()->filled('search') || request()->filled('status'))
-                        <a
-                            class="btn customer-clear-button"
-                            href="{{ route('customersPage') }}"
-                        >
+                        <a class="btn customer-clear-button" href="{{ route('customersPage') }}">
                             Clear
                         </a>
                     @endif
@@ -81,23 +61,12 @@
                         Filter by status
                     </label>
 
-                    <select
-                        class="filter"
-                        id="customerStatus"
-                        name="status"
-                        aria-label="Filter customers by status"
-                    >
+                    <select class="filter" id="customerStatus" name="status" aria-label="Filter customers by status">
                         <option value="">All records</option>
-                        <option
-                            value="Active"
-                            @selected(request('status') === 'Active')
-                        >
+                        <option value="Active" @selected(request('status') === 'Active')>
                             Active
                         </option>
-                        <option
-                            value="Inactive"
-                            @selected(request('status') === 'Inactive')
-                        >
+                        <option value="Inactive" @selected(request('status') === 'Inactive')>
                             Inactive
                         </option>
                     </select>
@@ -149,10 +118,7 @@
                                         @php($customerEmail = $primary?->email ?? $customer->email)
 
                                         @if ($customerEmail)
-                                            <a
-                                                class="customer-email"
-                                                href="mailto:{{ $customerEmail }}"
-                                            >
+                                            <a class="customer-email" href="mailto:{{ $customerEmail }}">
                                                 {{ $customerEmail }}
                                             </a>
                                         @else
@@ -164,10 +130,8 @@
                                         @php($customerPhone = $primary?->phone ?? $customer->phone)
 
                                         @if ($customerPhone)
-                                            <a
-                                                class="customer-phone"
-                                                href="tel:{{ preg_replace('/[^0-9+]/', '', $customerPhone) }}"
-                                            >
+                                            <a class="customer-phone"
+                                                href="tel:{{ preg_replace('/[^0-9+]/', '', $customerPhone) }}">
                                                 {{ $customerPhone }}
                                             </a>
                                         @else
@@ -178,18 +142,13 @@
                                     <td>{{ number_format($customer->contacts_count ?? 0) }}</td>
 
                                     <td>
-                                        <span
-                                            class="customer-address"
-                                            title="{{ $customer->address ?: 'Not provided' }}"
-                                        >
+                                        <span class="customer-address" title="{{ $customer->address ?: 'Not provided' }}">
                                             {{ $customer->address ?: 'Not provided' }}
                                         </span>
                                     </td>
 
                                     <td>
-                                        <span
-                                            class="pill {{ $customer->status === 'Inactive' ? 'gray' : 'green' }}"
-                                        >
+                                        <span class="pill {{ $customer->status === 'Inactive' ? 'gray' : 'green' }}">
                                             {{ $customer->status }}
                                         </span>
                                     </td>
@@ -197,42 +156,42 @@
                                     <td>
                                         <div class="table-actions">
                                             @if (auth()->user()->hasPermission('customers.view'))
-                                                <a
-                                                    class="action-btn action-view"
-                                                    href="{{ route('customers.show', $customer) }}"
-                                                >
+                                                <a class="action-btn action-view"
+                                                    href="{{ route('customers.show', $customer) }}">
                                                     View
                                                 </a>
                                             @endif
 
                                             @if (auth()->user()->hasPermission('customers.edit'))
-                                                <a
-                                                    class="action-btn action-edit"
-                                                    href="{{ route('customers.edit', $customer) }}"
-                                                >
+                                                <a class="action-btn action-edit"
+                                                    href="{{ route('customers.edit', $customer) }}">
                                                     Edit
                                                 </a>
                                             @endif
+                                            @if (auth()->user()->hasPermission('customers.deactivate'))
+                                                @if ($customer->status === 'Inactive')
+                                                    <form action="{{ route('customers.activate', $customer) }}"
+                                                        method="POST"
+                                                        onsubmit="return confirm('Activate this customer?');">
+                                                        @csrf
+                                                        @method('PATCH')
 
-                                            @if (
-                                                auth()->user()->hasPermission('customers.deactivate')
-                                                && $customer->status !== 'Inactive'
-                                            )
-                                                <form
-                                                    action="{{ route('customers.deactivate', $customer) }}"
-                                                    method="POST"
-                                                    onsubmit="return confirm('Deactivate this customer?');"
-                                                >
-                                                    @csrf
-                                                    @method('PATCH')
+                                                        <button class="action-btn action-view" type="submit">
+                                                            Activate
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <form action="{{ route('customers.deactivate', $customer) }}"
+                                                        method="POST"
+                                                        onsubmit="return confirm('Deactivate this customer?');">
+                                                        @csrf
+                                                        @method('PATCH')
 
-                                                    <button
-                                                        class="action-btn action-delete"
-                                                        type="submit"
-                                                    >
-                                                        Deactivate
-                                                    </button>
-                                                </form>
+                                                        <button class="action-btn action-delete" type="submit">
+                                                            Deactivate
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             @endif
                                         </div>
                                     </td>
@@ -246,10 +205,7 @@
                                             @if (request()->filled('search') || request()->filled('status'))
                                                 <p>Try changing or clearing the current filters.</p>
 
-                                                <a
-                                                    class="btn"
-                                                    href="{{ route('customersPage') }}"
-                                                >
+                                                <a class="btn" href="{{ route('customersPage') }}">
                                                     Clear filters
                                                 </a>
                                             @endif
@@ -342,7 +298,10 @@
             min-width: 1050px;
         }
 
-        .customers-table th:last-child,
+        .customers-table th:last-child {
+            text-align: center;
+        }
+
         .customers-table td:last-child {
             text-align: right;
         }
@@ -368,6 +327,8 @@
             clip: rect(0, 0, 0, 0);
             white-space: nowrap;
         }
+
+
 
         @media (max-width: 720px) {
             .customers-page {

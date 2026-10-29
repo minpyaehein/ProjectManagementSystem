@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Supplier;
@@ -50,7 +49,7 @@ class SupplierController extends Controller
                         });
                 });
             })
-            ->when($status, fn ($query, string $status) => $query->where('status', $status))
+            ->when($status, fn($query, string $status) => $query->where('status', $status))
             ->orderByDesc('created_at')
             ->paginate(5)
             ->withQueryString();
@@ -71,11 +70,11 @@ class SupplierController extends Controller
 
         DB::transaction(function () use ($validated): void {
             $supplier = Supplier::create([
-                'name' => $validated['name'],
+                'name'     => $validated['name'],
                 'category' => $validated['category'],
-                'address' => $validated['address'] ?? null,
-                'status' => $validated['status'],
-                'notes' => $validated['notes'] ?? null,
+                'address'  => $validated['address'] ?? null,
+                'status'   => $validated['status'],
+                'notes'    => $validated['notes'] ?? null,
             ]);
 
             $this->syncContacts($supplier, $validated['contacts'], (int) $validated['primary_contact']);
@@ -106,11 +105,11 @@ class SupplierController extends Controller
 
         DB::transaction(function () use ($validated, $supplier): void {
             $supplier->update([
-                'name' => $validated['name'],
+                'name'     => $validated['name'],
                 'category' => $validated['category'],
-                'address' => $validated['address'] ?? null,
-                'status' => $validated['status'],
-                'notes' => $validated['notes'] ?? null,
+                'address'  => $validated['address'] ?? null,
+                'status'   => $validated['status'],
+                'notes'    => $validated['notes'] ?? null,
             ]);
 
             $this->syncContacts($supplier, $validated['contacts'], (int) $validated['primary_contact']);
@@ -127,6 +126,38 @@ class SupplierController extends Controller
         return back()->with('success', 'Supplier deactivated successfully.');
     }
 
+    public function activate(
+        Request $request,
+        Supplier $supplier
+    ): RedirectResponse {
+        abort_unless(
+            $request->user()->hasPermission(
+                'suppliers.deactivate'
+            ),
+            403
+        );
+
+        if ($supplier->status === 'Active') {
+            return redirect()
+                ->route('suppliersPage')
+                ->with(
+                    'error',
+                    'Supplier is already active.'
+                );
+        }
+
+        $supplier->update([
+            'status' => 'Active',
+        ]);
+
+        return redirect()
+            ->route('suppliersPage')
+            ->with(
+                'success',
+                'Supplier activated successfully.'
+            );
+    }
+
     public function destroy(Supplier $supplier): RedirectResponse
     {
         if ($supplier->projects()->exists()) {
@@ -140,32 +171,32 @@ class SupplierController extends Controller
 
     private function validateSupplier(Request $request): array
     {
-        $contacts = $request->input('contacts', []);
+        $contacts            = $request->input('contacts', []);
         $validPrimaryIndexes = is_array($contacts) ? array_keys(array_values($contacts)) : [];
 
         return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'category' => ['required', Rule::in(self::CATEGORIES)],
-            'address' => ['nullable', 'string', 'max:1000'],
-            'status' => ['required', Rule::in(['Active', 'Inactive'])],
-            'notes' => ['nullable', 'string', 'max:2000'],
-            'contacts' => ['required', 'array', 'min:1', 'max:20'],
+            'name'                           => ['required', 'string', 'max:255'],
+            'category'                       => ['required', Rule::in(self::CATEGORIES)],
+            'address'                        => ['nullable', 'string', 'max:1000'],
+            'status'                         => ['required', Rule::in(['Active', 'Inactive'])],
+            'notes'                          => ['nullable', 'string', 'max:2000'],
+            'contacts'                       => ['required', 'array', 'min:1', 'max:20'],
             'contacts.*.supplier_contact_id' => ['nullable', 'integer'],
-            'contacts.*.name' => ['required', 'string', 'max:255'],
-            'contacts.*.position' => ['nullable', 'string', 'max:255'],
-            'contacts.*.phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s()]+$/'],
-            'contacts.*.email' => ['nullable', 'email', 'max:255'],
-            'primary_contact' => ['required', 'integer', Rule::in($validPrimaryIndexes)],
+            'contacts.*.name'                => ['required', 'string', 'max:255'],
+            'contacts.*.position'            => ['nullable', 'string', 'max:255'],
+            'contacts.*.phone'               => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s()]+$/'],
+            'contacts.*.email'               => ['nullable', 'email', 'max:255'],
+            'primary_contact'                => ['required', 'integer', Rule::in($validPrimaryIndexes)],
         ], [
-            'name.required' => 'Please enter the supplier name.',
-            'category.required' => 'Please select a supplier category.',
-            'contacts.required' => 'Please add at least one contact person.',
-            'contacts.min' => 'Please add at least one contact person.',
+            'name.required'            => 'Please enter the supplier name.',
+            'category.required'        => 'Please select a supplier category.',
+            'contacts.required'        => 'Please add at least one contact person.',
+            'contacts.min'             => 'Please add at least one contact person.',
             'contacts.*.name.required' => 'Every contact person must have a name.',
-            'contacts.*.phone.regex' => 'A contact phone number contains invalid characters.',
-            'contacts.*.email.email' => 'A contact email address is invalid.',
+            'contacts.*.phone.regex'   => 'A contact phone number contains invalid characters.',
+            'contacts.*.email.email'   => 'A contact email address is invalid.',
             'primary_contact.required' => 'Please select a primary contact.',
-            'primary_contact.in' => 'The selected primary contact is invalid.',
+            'primary_contact.in'       => 'The selected primary contact is invalid.',
         ]);
     }
 
@@ -174,15 +205,15 @@ class SupplierController extends Controller
         $keptIds = [];
 
         foreach (array_values($contacts) as $index => $contactData) {
-            $contactId = !empty($contactData['supplier_contact_id'])
+            $contactId = ! empty($contactData['supplier_contact_id'])
                 ? (int) $contactData['supplier_contact_id']
                 : null;
 
             $payload = [
-                'name' => trim($contactData['name']),
-                'position' => $this->nullableTrim($contactData['position'] ?? null),
-                'phone' => $this->nullableTrim($contactData['phone'] ?? null),
-                'email' => $this->nullableTrim($contactData['email'] ?? null),
+                'name'       => trim($contactData['name']),
+                'position'   => $this->nullableTrim($contactData['position'] ?? null),
+                'phone'      => $this->nullableTrim($contactData['phone'] ?? null),
+                'email'      => $this->nullableTrim($contactData['email'] ?? null),
                 'is_primary' => $index === $primaryIndex,
             ];
 
@@ -196,7 +227,7 @@ class SupplierController extends Controller
                 }
             }
 
-            $contact = $supplier->contacts()->create($payload);
+            $contact   = $supplier->contacts()->create($payload);
             $keptIds[] = $contact->supplier_contact_id;
         }
 
@@ -209,8 +240,8 @@ class SupplierController extends Controller
 
         $supplier->update([
             'contact_person' => $primary?->name,
-            'phone' => $primary?->phone,
-            'email' => $primary?->email,
+            'phone'          => $primary?->phone,
+            'email'          => $primary?->email,
         ]);
     }
 

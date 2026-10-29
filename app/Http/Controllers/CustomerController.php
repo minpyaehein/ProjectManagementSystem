@@ -128,6 +128,38 @@ class CustomerController extends Controller
         );
     }
 
+    public function activate(
+        Request $request,
+        Customer $customer
+    ): RedirectResponse {
+        abort_unless(
+            $request->user()->hasPermission(
+                'customers.deactivate'
+            ),
+            403
+        );
+
+        if ($customer->status === 'Active') {
+            return redirect()
+                ->route('customersPage')
+                ->with(
+                    'error',
+                    'Customer is already active.'
+                );
+        }
+
+        $customer->update([
+            'status' => 'Active',
+        ]);
+
+        return redirect()
+            ->route('customersPage')
+            ->with(
+                'success',
+                'Customer activated successfully.'
+            );
+    }
+
     public function destroy(Customer $customer): RedirectResponse
     {
         if ($customer->projects()->exists()) {

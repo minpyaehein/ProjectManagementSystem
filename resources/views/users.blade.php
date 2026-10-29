@@ -34,35 +34,19 @@
         @endif
 
         <div class="card users-card">
-            <form
-                class="toolbar users-toolbar"
-                id="userFilterForm"
-                method="GET"
-                action="{{ route('usersPage') }}"
-            >
+            <form class="toolbar users-toolbar" id="userFilterForm" method="GET" action="{{ route('usersPage') }}">
                 <div class="users-search-group">
                     <label class="sr-only" for="userSearch">Search users</label>
 
-                    <input
-                        class="search"
-                        id="userSearch"
-                        name="search"
-                        type="search"
-                        value="{{ request('search') }}"
-                        placeholder="Search users..."
-                        autocomplete="off"
-                        aria-label="Search users"
-                    >
+                    <input class="search" id="userSearch" name="search" type="search" value="{{ request('search') }}"
+                        placeholder="Search users..." autocomplete="off" aria-label="Search users">
 
                     <button class="btn users-search-button btn-primary" type="submit">
                         Search
                     </button>
 
                     @if (request()->filled('search') || request()->filled('status'))
-                        <a
-                            class="btn users-clear-button"
-                            href="{{ route('usersPage') }}"
-                        >
+                        <a class="btn users-clear-button" href="{{ route('usersPage') }}">
                             Clear
                         </a>
                     @endif
@@ -73,12 +57,8 @@
                         Filter users by status
                     </label>
 
-                    <select
-                        class="filter users-status-filter"
-                        id="userStatus"
-                        name="status"
-                        aria-label="Filter users by status"
-                    >
+                    <select class="filter users-status-filter" id="userStatus" name="status"
+                        aria-label="Filter users by status">
                         <option value="">All statuses</option>
                         <option value="Active" @selected(request('status') === 'Active')>
                             Active
@@ -90,12 +70,7 @@
                 </div>
             </form>
 
-            <div
-                class="users-filter-progress"
-                id="userFilterProgress"
-                role="status"
-                hidden
-            >
+            <div class="users-filter-progress" id="userFilterProgress" role="status" hidden>
                 Updating user results...
             </div>
 
@@ -129,10 +104,7 @@
 
                                     <td>
                                         @if ($user->email)
-                                            <a
-                                                class="user-email-link"
-                                                href="mailto:{{ $user->email }}"
-                                            >
+                                            <a class="user-email-link" href="mailto:{{ $user->email }}">
                                                 {{ $user->email }}
                                             </a>
                                         @else
@@ -147,9 +119,7 @@
                                     </td>
 
                                     <td>
-                                        <span
-                                            class="pill {{ $user->status === 'Inactive' ? 'gray' : 'green' }}"
-                                        >
+                                        <span class="pill {{ $user->status === 'Inactive' ? 'gray' : 'green' }}">
                                             {{ $user->status ?? 'Active' }}
                                         </span>
                                     </td>
@@ -157,43 +127,43 @@
                                     <td>
                                         <div class="table-actions">
                                             @if (auth()->user()->hasPermission('users.view'))
-                                                <a
-                                                    class="action-btn action-view"
-                                                    href="{{ route('users.show', $user) }}"
-                                                >
+                                                <a class="action-btn action-view" href="{{ route('users.show', $user) }}">
                                                     View
                                                 </a>
                                             @endif
 
                                             @if (auth()->user()->hasPermission('users.edit'))
-                                                <a
-                                                    class="action-btn action-edit"
-                                                    href="{{ route('users.edit', $user) }}"
-                                                >
+                                                <a class="action-btn action-edit" href="{{ route('users.edit', $user) }}">
                                                     Edit
                                                 </a>
                                             @endif
 
-                                            @if (
-                                                auth()->user()->hasPermission('users.deactivate')
-                                                && auth()->id() !== $user->user_id
-                                                && $user->status !== 'Inactive'
-                                            )
-                                                <form
-                                                    action="{{ route('users.deactivate', $user) }}"
+                                            @if (auth()->user()->hasPermission('users.deactivate') && auth()->id() !== $user->user_id)
+                                                @if ($user->status === 'Inactive')
+                                                    <form action="{{ route('users.activate', $user) }}"
                                                     method="POST"
-                                                    onsubmit="return confirm('Deactivate this user?');"
-                                                >
+                                                    onsubmit="return confirm('Activate this user?');"
+                                                    >
                                                     @csrf
                                                     @method('PATCH')
 
-                                                    <button
-                                                        class="action-btn action-delete"
-                                                        type="submit"
+                                                    <button class="action-btn action-view" type="submit">
+                                                        Activate
+                                                    </button>
+                                                    </form>
+                                                @else
+                                                    <form action="{{ route('users.deactivate', $user) }}"
+                                                    method="POST"
+                                                    onsubmit="return confirm('Deactivate this user?');"
                                                     >
+                                                    @csrf
+                                                    @method('PATCH')
+
+                                                    <button class="action-btn action-delete" type="submit">
                                                         Deactivate
                                                     </button>
-                                                </form>
+                                                    </form>
+                                                @endif
                                             @endif
                                         </div>
                                     </td>
@@ -213,10 +183,7 @@
                                                 <p>Create a user account to display it here.</p>
 
                                                 @if (auth()->user()->hasPermission('users.create'))
-                                                    <a
-                                                        class="btn btn-primary"
-                                                        href="{{ route('users.create') }}"
-                                                    >
+                                                    <a class="btn btn-primary" href="{{ route('users.create') }}">
                                                         ＋ Create user
                                                     </a>
                                                 @endif
@@ -319,7 +286,10 @@
             min-width: 850px;
         }
 
-        .users-table th:last-child,
+        .users-table th:last-child {
+            text-align: center;
+        }
+
         .users-table td:last-child {
             text-align: right;
         }
