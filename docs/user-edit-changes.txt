@@ -1,0 +1,9 @@
+1. In each Role option add data attributes:
+
+data-project-scope="{{ $role->project_access_scope }}"
+data-customer-scope="{{ $role->customer_access_scope }}"
+data-supplier-scope="{{ $role->supplier_access_scope }}"
+
+2. Immediately after the closing </div> of .form-grid, add:
+
+@include('partials.user-record-assignments')

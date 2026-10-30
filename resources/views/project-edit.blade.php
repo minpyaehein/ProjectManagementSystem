@@ -4,22 +4,49 @@
 @section('page-name', 'Projects / Edit')
 
 @section('content')
+    @php
+        $costItems = collect($project->costItems ?? []);
+        $revenueItems = collect($project->revenueItems ?? []);
+
+        $activeCostTotal = (float) $costItems->where('is_active', true)->sum('amount');
+
+        $activeRevenueTotal = (float) $revenueItems->where('is_active', true)->sum('amount');
+
+        $grossProfit = $activeRevenueTotal - $activeCostTotal;
+        $grossProfitPercent = $activeRevenueTotal > 0 ? ($grossProfit / $activeRevenueTotal) * 100 : 0;
+
+        $canEditProject = auth()->user()->hasPermission('projects.edit');
+    @endphp
+
     <section class="content project-entry-page project-edit-page">
         <div class="project-entry-card">
             <div class="project-entry-accent" aria-hidden="true"></div>
+
             <div class="project-entry-header">
                 <div>
                     <h1>Edit Project</h1>
                     <p>Keep customer, supplier, commercial, and schedule information up to date.</p>
                 </div>
 
-                <a href="{{ route('projectsPage') }}" class="project-entry-close" aria-label="Close and return to project">
+                <a href="{{ route('projectsPage') }}" class="project-entry-close" aria-label="Close and return to projects">
                     &times;
                 </a>
             </div>
 
+            @if (session('success'))
+                <div class="alert alert-success" role="status">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="alert alert-danger project-entry-alert" role="alert">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             @if ($errors->any())
-                <div class="alert alert-danger project-entry-alert">
+                <div class="alert alert-danger project-entry-alert" role="alert">
                     <strong>Please correct the following fields:</strong>
                     <ul>
                         @foreach ($errors->all() as $error)
@@ -96,7 +123,8 @@
                         <select id="productCategory" name="productCategory" required>
                             <option value="">-- Select Product Category --</option>
                             @foreach ($productCategories as $category)
-                                <option value="{{ $category }}" @selected(old('productCategory', $project->productCategory) === $category)>{{ $category }}
+                                <option value="{{ $category }}" @selected(old('productCategory', $project->productCategory) === $category)>
+                                    {{ $category }}
                                 </option>
                             @endforeach
                         </select>
@@ -109,7 +137,8 @@
                         <label for="type">Project Type</label>
                         <select id="type" name="type" required>
                             @foreach ($projectTypes as $projectType)
-                                <option value="{{ $projectType }}" @selected(old('type', $project->type) === $projectType)>{{ $projectType }}
+                                <option value="{{ $projectType }}" @selected(old('type', $project->type) === $projectType)>
+                                    {{ $projectType }}
                                 </option>
                             @endforeach
                         </select>
@@ -122,7 +151,8 @@
                         <label for="status">Progress Status</label>
                         <select id="status" name="status" required>
                             @foreach ($progressStatuses as $progressStatus)
-                                <option value="{{ $progressStatus }}" @selected(old('status', $project->status) === $progressStatus)>{{ $progressStatus }}
+                                <option value="{{ $progressStatus }}" @selected(old('status', $project->status) === $progressStatus)>
+                                    {{ $progressStatus }}
                                 </option>
                             @endforeach
                         </select>
@@ -130,10 +160,7 @@
                             <span class="field-error">{{ $message }}</span>
                         @enderror
                     </div>
-
                 </div>
-
-                <br>
 
                 <div class="project-entry-grid project-entry-grid-schedule">
                     <div class="project-entry-field">
@@ -164,33 +191,33 @@
                 </div>
 
                 <div class="project-entry-footer">
-                    <a class="project-entry-cancel" href="{{ route('projectsPage') }}">Cancel</a>
-                    <button class="project-entry-save" type="submit">Save Changes</button>
+                    <a class="project-entry-cancel" href="{{ route('projectsPage') }}">
+                        Cancel
+                    </a>
+                    <button class="project-entry-save" type="submit">
+                        Save Changes
+                    </button>
                 </div>
             </form>
 
-            @php
-                $activeCostTotal = $project->costItems->where('is_active', true)->sum('amount');
-                $activeRevenueTotal = $project->revenueItems->where('is_active', true)->sum('amount');
-                $grossProfit = $activeRevenueTotal - $activeCostTotal;
-                $grossProfitPercent = $activeRevenueTotal > 0 ? ($grossProfit / $activeRevenueTotal) * 100 : 0;
-            @endphp
-            <br><br>
             <div class="financial-overview">
                 <div class="financial-overview-card">
                     <span>Cost</span>
                     <strong>{{ number_format($activeCostTotal, 2) }} MMK</strong>
                 </div>
+
                 <div class="financial-overview-card">
                     <span>Revenue</span>
                     <strong>{{ number_format($activeRevenueTotal, 2) }} MMK</strong>
                 </div>
+
                 <div class="financial-overview-card">
                     <span>GP</span>
                     <strong class="{{ $grossProfit < 0 ? 'negative' : '' }}">
                         {{ number_format($grossProfit, 2) }} MMK
                     </strong>
                 </div>
+
                 <div class="financial-overview-card">
                     <span>GP %</span>
                     <strong class="{{ $grossProfitPercent < 0 ? 'negative' : '' }}">
@@ -207,18 +234,20 @@
                     </div>
                 </div>
 
-                <form class="financial-entry-form" action="{{ route('projects.costs.store', $project) }}"
-                    method="POST">
-                    @csrf
-                    <input type="date" name="item_date" value="{{ old('item_date', now()->format('Y-m-d')) }}"
-                        required>
-                    <input type="text" name="description" value="{{ old('description') }}"
-                        placeholder="Cost description" maxlength="255" required>
-                    <input type="number" name="amount" value="{{ old('amount') }}" min="0.01" step="0.01"
-                        placeholder="Amount" required>
-                    <button type="submit">Add Cost</button>
-                    <button type="reset" class="financial-clear-button">Clear</button>
-                </form>
+                @if ($canEditProject)
+                    <form class="financial-entry-form" action="{{ route('projects.costs.store', $project) }}"
+                        method="POST">
+                        @csrf
+                        <input type="date" name="item_date" value="{{ old('item_date', now()->format('Y-m-d')) }}"
+                            required>
+                        <input type="text" name="description" value="{{ old('description') }}"
+                            placeholder="Cost description" maxlength="255" required>
+                        <input type="number" name="amount" value="{{ old('amount') }}" min="0.01" step="0.01"
+                            placeholder="Amount" required>
+                        <button type="submit">Add Cost</button>
+                        <button type="reset" class="financial-clear-button">Clear</button>
+                    </form>
+                @endif
 
                 <div class="financial-table-wrap">
                     <table class="financial-table">
@@ -231,43 +260,54 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($project->costItems as $costItem)
+                            @forelse ($costItems as $costItem)
                                 <tr class="{{ $costItem->is_active ? '' : 'financial-row-inactive' }}">
-                                    <td>{{ $costItem->item_date->format('d M Y') }}</td>
+                                    <td>{{ $costItem->item_date?->format('d M Y') ?? '—' }}</td>
                                     <td>{{ $costItem->description }}</td>
-                                    <td class="financial-number">{{ number_format((float) $costItem->amount, 2) }} MMK
+                                    <td class="financial-number">
+                                        {{ number_format((float) $costItem->amount, 2) }} MMK
                                     </td>
                                     <td>
-                                        <div class="financial-row-actions">
-                                            <button type="button"
-                                                data-financial-edit="cost-{{ $costItem->project_cost_id }}">Edit</button>
-                                            <form action="{{ route('projects.costs.destroy', [$project, $costItem]) }}"
-                                                method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit">
-                                                    Remove
+                                        @if ($canEditProject)
+                                            <div class="financial-row-actions">
+                                                <button type="button"
+                                                    data-financial-edit="cost-{{ $costItem->project_cost_id }}">
+                                                    Edit
                                                 </button>
+
+                                                <form
+                                                    action="{{ route('projects.costs.destroy', [$project, $costItem]) }}"
+                                                    method="POST" onsubmit="return confirm('Remove this cost item?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit">Remove</button>
+                                                </form>
+                                            </div>
+
+                                            <form id="cost-{{ $costItem->project_cost_id }}"
+                                                class="financial-inline-edit"
+                                                action="{{ route('projects.costs.update', [$project, $costItem]) }}"
+                                                method="POST" hidden>
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="date" name="item_date"
+                                                    value="{{ $costItem->item_date?->format('Y-m-d') }}" required>
+                                                <input type="text" name="description"
+                                                    value="{{ $costItem->description }}" maxlength="255" required>
+                                                <input type="number" name="amount" value="{{ $costItem->amount }}"
+                                                     min="0.01" step="0.01" required>
+                                                <button type="submit">Save</button>
                                             </form>
-                                        </div>
-                                        <form id="cost-{{ $costItem->project_cost_id }}" class="financial-inline-edit"
-                                            action="{{ route('projects.costs.update', [$project, $costItem]) }}"
-                                            method="POST" hidden>
-                                            @csrf
-                                            @method('PUT')
-                                            <input type="date" name="item_date"
-                                                value="{{ $costItem->item_date->format('Y-m-d') }}" required>
-                                            <input type="text" name="description"
-                                                value="{{ $costItem->description }}" maxlength="255" required>
-                                            <input type="number" name="amount" value="{{ $costItem->amount }}"
-                                                min="0.01" step="0.01" required>
-                                            <button type="submit">Save</button>
-                                        </form>
+                                        @else
+                                            <span class="small-muted">View only</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="financial-empty">No cost items yet.</td>
+                                    <td colspan="4" class="financial-empty">
+                                        No cost items yet.
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -283,18 +323,20 @@
                     </div>
                 </div>
 
-                <form class="financial-entry-form" action="{{ route('projects.revenues.store', $project) }}"
-                    method="POST">
-                    @csrf
-                    <input type="date" name="item_date" value="{{ old('item_date', now()->format('Y-m-d')) }}"
-                        required>
-                    <input type="text" name="description" value="{{ old('description') }}"
-                        placeholder="Revenue description" maxlength="255" required>
-                    <input type="number" name="amount" value="{{ old('amount') }}" min="0.01" step="0.01"
-                        placeholder="Amount" required>
-                    <button type="submit">Add Revenue</button>
-                    <button type="reset" class="financial-clear-button">Clear</button>
-                </form>
+                @if ($canEditProject)
+                    <form class="financial-entry-form" action="{{ route('projects.revenues.store', $project) }}"
+                        method="POST">
+                        @csrf
+                        <input type="date" name="item_date" value="{{ old('item_date', now()->format('Y-m-d')) }}"
+                            required>
+                        <input type="text" name="description" value="{{ old('description') }}"
+                            placeholder="Revenue description" maxlength="255" required>
+                        <input type="number" name="amount" value="{{ old('amount') }}" min="0.01" step="0.01"
+                            placeholder="Amount" required>
+                        <button type="submit">Add Revenue</button>
+                        <button type="reset" class="financial-clear-button">Clear</button>
+                    </form>
+                @endif
 
                 <div class="financial-table-wrap">
                     <table class="financial-table">
@@ -307,45 +349,55 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($project->revenueItems as $revenueItem)
+                            @forelse ($revenueItems as $revenueItem)
                                 <tr class="{{ $revenueItem->is_active ? '' : 'financial-row-inactive' }}">
-                                    <td>{{ $revenueItem->item_date->format('d M Y') }}</td>
+                                    <td>{{ $revenueItem->item_date?->format('d M Y') ?? '—' }}</td>
                                     <td>{{ $revenueItem->description }}</td>
-                                    <td class="financial-number">{{ number_format((float) $revenueItem->amount, 2) }} MMK
+                                    <td class="financial-number">
+                                        {{ number_format((float) $revenueItem->amount, 2) }} MMK
                                     </td>
                                     <td>
-                                        <div class="financial-row-actions">
-                                            <button type="button"
-                                                data-financial-edit="revenue-{{ $revenueItem->project_revenue_id }}">Edit</button>
-                                            <form
-                                                action="{{ route('projects.revenues.destroy', [$project, $revenueItem]) }}"
-                                                method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit">
-                                                    Remove
+                                        @if ($canEditProject)
+                                            <div class="financial-row-actions">
+                                                <button type="button"
+                                                    data-financial-edit="revenue-{{ $revenueItem->project_revenue_id }}">
+                                                    Edit
                                                 </button>
+
+                                                <form
+                                                    action="{{ route('projects.revenues.destroy', [$project, $revenueItem]) }}"
+                                                    method="POST"
+                                                    onsubmit="return confirm('Remove this revenue item?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit">Remove</button>
+                                                </form>
+                                            </div>
+
+                                            <form id="revenue-{{ $revenueItem->project_revenue_id }}"
+                                                class="financial-inline-edit"
+                                                action="{{ route('projects.revenues.update', [$project, $revenueItem]) }}"
+                                                method="POST" hidden>
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="date" name="item_date"
+                                                    value="{{ $revenueItem->item_date?->format('Y-m-d') }}" required>
+                                                <input type="text" name="description"
+                                                    value="{{ $revenueItem->description }}" maxlength="255" required>
+                                                <input type="number" name="amount" value="{{ $revenueItem->amount }}"
+                                                    min="0.01" step="0.01" required>
+                                                <button type="submit">Save</button>
                                             </form>
-                                        </div>
-                                        <form id="revenue-{{ $revenueItem->project_revenue_id }}"
-                                            class="financial-inline-edit"
-                                            action="{{ route('projects.revenues.update', [$project, $revenueItem]) }}"
-                                            method="POST" hidden>
-                                            @csrf
-                                            @method('PUT')
-                                            <input type="date" name="item_date"
-                                                value="{{ $revenueItem->item_date->format('Y-m-d') }}" required>
-                                            <input type="text" name="description"
-                                                value="{{ $revenueItem->description }}" maxlength="255" required>
-                                            <input type="number" name="amount" value="{{ $revenueItem->amount }}"
-                                                min="0.01" step="0.01" required>
-                                            <button type="submit">Save</button>
-                                        </form>
+                                        @else
+                                            <span class="small-muted">View only</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="financial-empty">No revenue items yet.</td>
+                                    <td colspan="4" class="financial-empty">
+                                        No revenue items yet.
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -363,23 +415,37 @@
             const endDate = document.getElementById('end_date');
 
             function updateEndDateMinimum() {
-                if (!startDate || !endDate) return;
+                if (!startDate || !endDate) {
+                    return;
+                }
+
                 endDate.min = startDate.value;
-                if (endDate.value && endDate.value < startDate.value) endDate.value = '';
+
+                if (
+                    endDate.value &&
+                    startDate.value &&
+                    endDate.value < startDate.value
+                ) {
+                    endDate.value = '';
+                }
             }
 
             startDate?.addEventListener('change', updateEndDateMinimum);
-
             updateEndDateMinimum();
 
-            document.querySelectorAll('[data-financial-edit]').forEach(function(button) {
-                button.addEventListener('click', function() {
-                    const form = document.getElementById(button.dataset.financialEdit);
-                    if (form) {
-                        form.hidden = !form.hidden;
-                    }
-                });
-            });
+            document.querySelectorAll('[data-financial-edit]').forEach(
+                function(button) {
+                    button.addEventListener('click', function() {
+                        const form = document.getElementById(
+                            button.dataset.financialEdit
+                        );
+
+                        if (form) {
+                            form.hidden = !form.hidden;
+                        }
+                    });
+                }
+            );
         });
     </script>
 @endpush

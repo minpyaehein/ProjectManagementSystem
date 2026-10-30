@@ -2,17 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
-    use HasFactory;
-
     protected $table = 'project';
-
     protected $primaryKey = 'project_id';
 
     protected $fillable = [
@@ -31,6 +27,8 @@ class Project extends Model
         'cost',
         'revenue',
         'log_id',
+        'created_by',
+        'assigned_user_id',
     ];
 
     protected function casts(): array
@@ -38,38 +36,39 @@ class Project extends Model
         return [
             'date' => 'date',
             'end_date' => 'date',
+            'is_active' => 'boolean',
             'cost' => 'decimal:2',
             'revenue' => 'decimal:2',
-            'is_active' => 'boolean',
+            'created_by' => 'integer',
+            'assigned_user_id' => 'integer',
         ];
     }
 
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(
-            Customer::class,
-            'customer_id',
-            'customer_id'
-        );
+        return $this->belongsTo(Customer::class, 'customer_id', 'customer_id');
     }
 
     public function supplier(): BelongsTo
     {
-        return $this->belongsTo(
-            Supplier::class,
-            'supplier_id',
-            'supplier_id'
-        );
+        return $this->belongsTo(Supplier::class, 'supplier_id', 'supplier_id');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by', 'user_id');
+    }
+
+    public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id', 'user_id');
     }
 
     public function users(): HasMany
     {
-        return $this->hasMany(
-            User::class,
-            'project_id',
-            'project_id'
-        );
+        return $this->hasMany(User::class, 'project_id', 'project_id');
     }
+
     public function costItems(): HasMany
     {
         return $this->hasMany(ProjectCost::class, 'project_id', 'project_id')

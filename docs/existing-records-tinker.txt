@@ -1,0 +1,6 @@
+Run php artisan tinker, then replace 1 with the real administrator user_id:
+
+$adminId = 1;
+App\Models\Project::query()->whereNull('created_by')->update(['created_by' => $adminId, 'assigned_user_id' => $adminId]);
+App\Models\Customer::query()->whereNull('created_by')->update(['created_by' => $adminId, 'assigned_user_id' => $adminId]);
+App\Models\Supplier::query()->whereNull('created_by')->update(['created_by' => $adminId, 'assigned_user_id' => $adminId]);

@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Support\RecordAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,39 +13,28 @@ class CustomerController extends Controller
 {
     public function index(Request $request): View
     {
-        $validated = $request->validate([
-            'search' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', Rule::in(['Active', 'Inactive'])],
-        ]);
+        $search = trim((string) $request->query('search'));
+        $status = trim((string) $request->query('status'));
 
-        $search = trim((string) ($validated['search'] ?? ''));
-        $status = $validated['status'] ?? null;
-
-        $customers = Customer::query()
+        $customers = RecordAccess::apply(Customer::query(), $request->user(), 'customer_access_scope')
             ->with('primaryContact')
             ->withCount('contacts')
             ->when($search !== '', function ($query) use ($search): void {
-                $query->where(function ($subQuery) use ($search): void {
-                    $subQuery
-                        ->where('name', 'like', '%' . $search . '%')
+                $query->where(function ($customerQuery) use ($search): void {
+                    $customerQuery->where('name', 'like', '%' . $search . '%')
                         ->orWhere('contact_person', 'like', '%' . $search . '%')
                         ->orWhere('email', 'like', '%' . $search . '%')
                         ->orWhere('phone', 'like', '%' . $search . '%')
-                        ->orWhere('address', 'like', '%' . $search . '%')
                         ->orWhereHas('contacts', function ($contactQuery) use ($search): void {
-                            $contactQuery
-                                ->where('name', 'like', '%' . $search . '%')
-                                ->orWhere('position', 'like', '%' . $search . '%')
-                                ->orWhere('phone', 'like', '%' . $search . '%')
-                                ->orWhere('email', 'like', '%' . $search . '%');
+                            $contactQuery->where('name', 'like', '%' . $search . '%')
+                                ->orWhere('email', 'like', '%' . $search . '%')
+                                ->orWhere('phone', 'like', '%' . $search . '%');
                         });
                 });
             })
-            ->when($status, function ($query, string $status): void {
-                $query->where('status', $status);
-            })
-            ->orderByDesc('created_at')
-            ->paginate(5)
+            ->when(in_array($status, ['Active', 'Inactive'], true), fn($query) => $query->where('status', $status))
+            ->latest('updated_at')
+            ->paginate(10)
             ->withQueryString();
 
         return view('customers', compact('customers'));
@@ -57,41 +47,42 @@ class CustomerController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless($request->user()->hasPermission('customers.create'), 403);
         $validated = $this->validateCustomer($request);
 
-        DB::transaction(function () use ($validated): void {
-            $customer = Customer::create([
-                'name'    => $validated['name'],
-                'address' => $validated['address'] ?? null,
-                'status'  => $validated['status'],
-                'notes'   => $validated['notes'] ?? null,
+        DB::transaction(function () use ($validated, $request): void {
+            $customer = Customer::query()->create([
+                'name'             => $validated['name'],
+                'address'          => $validated['address'] ?? null,
+                'status'           => $validated['status'],
+                'notes'            => $validated['notes'] ?? null,
+                'created_by'       => $request->user()->user_id,
+                'assigned_user_id' => $request->user()->user_id,
             ]);
-
-            $this->syncContacts(
-                $customer,
-                $validated['contacts'],
-                (int) $validated['primary_contact']
-            );
-
+            $this->syncContacts($customer, $validated['contacts'], (int) $validated['primary_contact']);
             $this->syncLegacyPrimaryFields($customer);
         });
 
-        return redirect()
-            ->route('customersPage')
-            ->with('success', 'Customer created successfully.');
+        return redirect()->route('customersPage')->with('success', 'Customer created successfully.');
     }
 
-    public function edit(Customer $customer): View
+    public function show(Request $request, Customer $customer): View
     {
+        RecordAccess::authorize($request->user(), $customer, 'customer_access_scope', 'customers.view');
         $customer->load('contacts');
+        return view('customer-detail', compact('customer'));
+    }
 
+    public function edit(Request $request, Customer $customer): View
+    {
+        RecordAccess::authorize($request->user(), $customer, 'customer_access_scope', 'customers.edit');
+        $customer->load('contacts');
         return view('customer-edit', compact('customer'));
     }
 
-    public function update(
-        Request $request,
-        Customer $customer
-    ): RedirectResponse {
+    public function update(Request $request, Customer $customer): RedirectResponse
+    {
+        RecordAccess::authorize($request->user(), $customer, 'customer_access_scope', 'customers.edit');
         $validated = $this->validateCustomer($request);
 
         DB::transaction(function () use ($validated, $customer): void {
@@ -101,241 +92,94 @@ class CustomerController extends Controller
                 'status'  => $validated['status'],
                 'notes'   => $validated['notes'] ?? null,
             ]);
-
-            $this->syncContacts(
-                $customer,
-                $validated['contacts'],
-                (int) $validated['primary_contact']
-            );
-
+            $this->syncContacts($customer, $validated['contacts'], (int) $validated['primary_contact']);
             $this->syncLegacyPrimaryFields($customer);
         });
 
-        return redirect()
-            ->route('customersPage')
-            ->with('success', 'Customer updated successfully.');
+        return redirect()->route('customersPage')->with('success', 'Customer updated successfully.');
     }
 
-    public function deactivate(Customer $customer): RedirectResponse
+    public function deactivate(Request $request, Customer $customer): RedirectResponse
     {
-        $customer->update([
-            'status' => 'Inactive',
-        ]);
-
-        return back()->with(
-            'success',
-            'Customer deactivated successfully.'
-        );
+        RecordAccess::authorize($request->user(), $customer, 'customer_access_scope', 'customers.deactivate');
+        $customer->update(['status' => 'Inactive']);
+        return back()->with('success', 'Customer deactivated successfully.');
     }
 
-    public function activate(
-        Request $request,
-        Customer $customer
-    ): RedirectResponse {
-        abort_unless(
-            $request->user()->hasPermission(
-                'customers.deactivate'
-            ),
-            403
-        );
-
+    public function activate(Request $request, Customer $customer): RedirectResponse
+    {
+        RecordAccess::authorize($request->user(), $customer, 'customer_access_scope', 'customers.deactivate');
         if ($customer->status === 'Active') {
-            return redirect()
-                ->route('customersPage')
-                ->with(
-                    'error',
-                    'Customer is already active.'
-                );
+            return back()->with('error', 'Customer is already active.');
         }
 
-        $customer->update([
-            'status' => 'Active',
-        ]);
-
-        return redirect()
-            ->route('customersPage')
-            ->with(
-                'success',
-                'Customer activated successfully.'
-            );
+        $customer->update(['status' => 'Active']);
+        return back()->with('success', 'Customer activated successfully.');
     }
 
-    public function destroy(Customer $customer): RedirectResponse
+    public function destroy(Request $request, Customer $customer): RedirectResponse
     {
+        RecordAccess::authorize($request->user(), $customer, 'customer_access_scope', 'customers.deactivate');
         if ($customer->projects()->exists()) {
-            return back()->with(
-                'error',
-                'This customer cannot be deleted because projects are assigned to it.'
-            );
+            return back()->with('error', 'This customer cannot be deleted because projects are assigned to it.');
         }
 
         $customer->delete();
-
-        return redirect()
-            ->route('customersPage')
-            ->with('success', 'Customer deleted successfully.');
+        return redirect()->route('customersPage')->with('success', 'Customer deleted successfully.');
     }
 
     private function validateCustomer(Request $request): array
     {
-        $contacts            = $request->input('contacts', []);
-        $validPrimaryIndexes = is_array($contacts)
-            ? array_keys(array_values($contacts))
-            : [];
-
-        return $request->validate(
-            [
-                'name'                           => [
-                    'required',
-                    'string',
-                    'max:255',
-                ],
-                'address'                        => [
-                    'nullable',
-                    'string',
-                    'max:1000',
-                ],
-                'status'                         => [
-                    'required',
-                    Rule::in(['Active', 'Inactive']),
-                ],
-                'notes'                          => [
-                    'nullable',
-                    'string',
-                    'max:2000',
-                ],
-                'contacts'                       => [
-                    'required',
-                    'array',
-                    'min:1',
-                    'max:20',
-                ],
-                'contacts.*.customer_contact_id' => [
-                    'nullable',
-                    'integer',
-                ],
-                'contacts.*.name'                => [
-                    'required',
-                    'string',
-                    'max:255',
-                ],
-                'contacts.*.position'            => [
-                    'nullable',
-                    'string',
-                    'max:255',
-                ],
-                'contacts.*.phone'               => [
-                    'nullable',
-                    'string',
-                    'max:30',
-                    'regex:/^[0-9+\-\s()]+$/',
-                ],
-                'contacts.*.email'               => [
-                    'nullable',
-                    'email',
-                    'max:255',
-                ],
-                'primary_contact'                => [
-                    'required',
-                    'integer',
-                    Rule::in($validPrimaryIndexes),
-                ],
-            ],
-            [
-                'name.required'            => 'Please enter the customer name.',
-                'status.required'          => 'Please select a customer status.',
-                'contacts.required'        => 'Please add at least one contact person.',
-                'contacts.min'             => 'Please add at least one contact person.',
-                'contacts.max'             => 'A customer can have no more than 20 contacts.',
-                'contacts.*.name.required' => 'Every contact person must have a name.',
-                'contacts.*.phone.regex'   =>
-                'A contact phone number may contain only numbers, spaces, +, -, and parentheses.',
-                'contacts.*.email.email'   =>
-                'A contact email address is invalid.',
-                'primary_contact.required' =>
-                'Please select a primary contact.',
-                'primary_contact.in'       =>
-                'The selected primary contact is invalid.',
-            ]
-        );
+        $contacts = $request->input('contacts', []);
+        $indexes  = is_array($contacts) ? array_keys(array_values($contacts)) : [];
+        return $request->validate([
+            'name'                           => ['required', 'string', 'max:255'],
+            'address'                        => ['nullable', 'string', 'max:1000'],
+            'status'                         => ['required', Rule::in(['Active', 'Inactive'])],
+            'notes'                          => ['nullable', 'string', 'max:2000'],
+            'contacts'                       => ['required', 'array', 'min:1', 'max:20'],
+            'contacts.*.customer_contact_id' => ['nullable', 'integer'],
+            'contacts.*.name'                => ['required', 'string', 'max:255'],
+            'contacts.*.position'            => ['nullable', 'string', 'max:255'],
+            'contacts.*.phone'               => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s()]+$/'],
+            'contacts.*.email'               => ['nullable', 'email', 'max:255'],
+            'primary_contact'                => ['required', 'integer', Rule::in($indexes)],
+        ]);
     }
 
-    private function syncContacts(
-        Customer $customer,
-        array $contacts,
-        int $primaryIndex
-    ): void {
-        $keptContactIds = [];
-
-        foreach (array_values($contacts) as $index => $contactData) {
-            $contactId = ! empty($contactData['customer_contact_id'])
-                ? (int) $contactData['customer_contact_id']
-                : null;
-
+    private function syncContacts(Customer $customer, array $contacts, int $primaryIndex): void
+    {
+        $kept = [];
+        foreach (array_values($contacts) as $index => $data) {
+            $id      = ! empty($data['customer_contact_id']) ? (int) $data['customer_contact_id'] : null;
             $payload = [
-                'name'       => trim($contactData['name']),
-                'position'   => $this->nullableTrim(
-                    $contactData['position'] ?? null
-                ),
-                'phone'      => $this->nullableTrim(
-                    $contactData['phone'] ?? null
-                ),
-                'email'      => $this->nullableTrim(
-                    $contactData['email'] ?? null
-                ),
+                'name'       => trim($data['name']),
+                'position'   => $this->nullableTrim($data['position'] ?? null),
+                'phone'      => $this->nullableTrim($data['phone'] ?? null),
+                'email'      => $this->nullableTrim($data['email'] ?? null),
                 'is_primary' => $index === $primaryIndex,
             ];
-
-            if ($contactId !== null) {
-                $contact = $customer->contacts()
-                    ->where('customer_contact_id', $contactId)
-                    ->first();
-
-                if ($contact) {
-                    $contact->update($payload);
-                    $keptContactIds[] = $contact->customer_contact_id;
-                    continue;
-                }
+            $contact = $id ? $customer->contacts()->where('customer_contact_id', $id)->first() : null;
+            if ($contact) {
+                $contact->update($payload);
+            } else {
+                $contact = $customer->contacts()->create($payload);
             }
 
-            $contact          = $customer->contacts()->create($payload);
-            $keptContactIds[] = $contact->customer_contact_id;
+            $kept[] = $contact->customer_contact_id;
         }
-
-        $customer->contacts()
-            ->whereNotIn('customer_contact_id', $keptContactIds)
-            ->delete();
-    }
-
-    public function show(Customer $customer): View
-    {
-        $customer->load([
-            'contacts',
-        ]);
-
-        return view(
-            'customer-detail',
-            compact('customer')
-        );
+        $customer->contacts()->whereNotIn('customer_contact_id', $kept)->delete();
     }
 
     private function syncLegacyPrimaryFields(Customer $customer): void
     {
-        $primaryContact = $customer->contacts()
-            ->where('is_primary', true)
-            ->first();
-
-        $customer->update([
-            'contact_person' => $primaryContact?->name,
-            'phone'          => $primaryContact?->phone,
-            'email'          => $primaryContact?->email,
-        ]);
+        $primary = $customer->contacts()->where('is_primary', true)->first();
+        $customer->update(['contact_person' => $primary?->name, 'phone' => $primary?->phone, 'email' => $primary?->email]);
     }
 
     private function nullableTrim(?string $value): ?string
     {
         $value = trim((string) $value);
-
         return $value === '' ? null : $value;
     }
 }

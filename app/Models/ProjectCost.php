@@ -2,14 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProjectCost extends Model
 {
-    use HasFactory;
-
+    protected $table = 'project_costs';
     protected $primaryKey = 'project_cost_id';
 
     protected $fillable = [

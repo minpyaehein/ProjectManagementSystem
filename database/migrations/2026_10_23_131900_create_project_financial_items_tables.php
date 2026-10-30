@@ -13,7 +13,7 @@ return new class extends Migration
             $table->unsignedBigInteger('project_id');
             $table->date('item_date');
             $table->string('description', 255);
-            $table->decimal('amount', 15, 2);
+            $table->decimal('amount', 20, 2);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->unsignedBigInteger('project_id');
             $table->date('item_date');
             $table->string('description', 255);
-            $table->decimal('amount', 15, 2);
+            $table->decimal('amount', 20, 2);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
