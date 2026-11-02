@@ -26,7 +26,12 @@
                 </div>
 
                 <h2>{{ $user->name }}</h2>
-                <p>{{ $user->role?->name ?? 'No Role' }}</p>
+
+                <p>
+                    {{ $user->username ?? 'No Username' }}
+                    ·
+                    {{ $user->role?->name ?? 'No Role' }}
+                </p>
 
                 <span class="pill {{ $user->status === 'Inactive' ? 'gray' : 'green' }}">
                     {{ $user->status ?? 'Active' }}
@@ -81,30 +86,33 @@
                         <div class="form-grid">
                             <div class="field">
                                 <label for="profile_name">Full name</label>
-                                <input
-                                    id="profile_name"
-                                    name="name"
-                                    type="text"
-                                    value="{{ old('name', $user->name) }}"
-                                    maxlength="255"
-                                    autocomplete="name"
-                                    required
-                                >
+                                <input id="profile_name" name="name" type="text"
+                                    value="{{ old('name', $user->name) }}" maxlength="255" autocomplete="name" required>
                                 @error('name', 'profileUpdate')
                                     <span class="field-error">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="field">
+                                <label for="profile_username">
+                                    Username
+                                </label>
+
+                                <input id="profile_username" name="username" type="text"
+                                    value="{{ old('username', $user->username) }}"
+                                    minlength="3" maxlength="100" pattern="[a-zA-Z0-9._-]+" autocomplete="username"
+                                    spellcheck="false" required>
+
+                                @error('username', 'profileUpdate')
+                                    <span class="field-error">
+                                        {{ $message }}
+                                    </span>
                                 @enderror
                             </div>
 
                             <div class="field">
                                 <label for="profile_email">Email address</label>
-                                <input
-                                    id="profile_email"
-                                    name="email"
-                                    type="email"
-                                    value="{{ old('email', $user->email) }}"
-                                    maxlength="255"
-                                    autocomplete="email"
-                                >
+                                <input id="profile_email" name="email" type="email"
+                                    value="{{ old('email', $user->email) }}" maxlength="255" autocomplete="email">
                                 @error('email', 'profileUpdate')
                                     <span class="field-error">{{ $message }}</span>
                                 @enderror
@@ -112,16 +120,9 @@
 
                             <div class="field">
                                 <label for="profile_phone">Phone number</label>
-                                <input
-                                    id="profile_phone"
-                                    name="phone"
-                                    type="tel"
-                                    value="{{ old('phone', $user->phone) }}"
-                                    maxlength="30"
-                                    autocomplete="tel"
-                                    inputmode="tel"
-                                    placeholder="e.g. 09 123 456 789"
-                                >
+                                <input id="profile_phone" name="phone" type="tel"
+                                    value="{{ old('phone', $user->phone) }}" maxlength="30" autocomplete="tel"
+                                    inputmode="tel" placeholder="e.g. 09 123 456 789">
                                 @error('phone', 'profileUpdate')
                                     <span class="field-error">{{ $message }}</span>
                                 @enderror
@@ -129,11 +130,7 @@
 
                             <div class="field">
                                 <label>Role</label>
-                                <input
-                                    type="text"
-                                    value="{{ $user->role?->name ?? 'No Role' }}"
-                                    disabled
-                                >
+                                <input type="text" value="{{ $user->role?->name ?? 'No Role' }}" disabled>
                             </div>
                         </div>
 
@@ -178,19 +175,10 @@
                             <div class="field full">
                                 <label for="current_password">Current password</label>
                                 <div class="profile-password-control">
-                                    <input
-                                        id="current_password"
-                                        name="current_password"
-                                        type="password"
-                                        autocomplete="current-password"
-                                        required
-                                    >
-                                    <button
-                                        class="profile-password-toggle"
-                                        type="button"
-                                        data-password-toggle="current_password"
-                                        aria-label="Show current password"
-                                    >
+                                    <input id="current_password" name="current_password" type="password"
+                                        autocomplete="current-password" required>
+                                    <button class="profile-password-toggle" type="button"
+                                        data-password-toggle="current_password" aria-label="Show current password">
                                         Show
                                     </button>
                                 </div>
@@ -202,20 +190,10 @@
                             <div class="field">
                                 <label for="password">New password</label>
                                 <div class="profile-password-control">
-                                    <input
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        minlength="8"
-                                        autocomplete="new-password"
-                                        required
-                                    >
-                                    <button
-                                        class="profile-password-toggle"
-                                        type="button"
-                                        data-password-toggle="password"
-                                        aria-label="Show new password"
-                                    >
+                                    <input id="password" name="password" type="password" minlength="8"
+                                        autocomplete="new-password" required>
+                                    <button class="profile-password-toggle" type="button"
+                                        data-password-toggle="password" aria-label="Show new password">
                                         Show
                                     </button>
                                 </div>
@@ -227,20 +205,11 @@
                             <div class="field">
                                 <label for="password_confirmation">Confirm new password</label>
                                 <div class="profile-password-control">
-                                    <input
-                                        id="password_confirmation"
-                                        name="password_confirmation"
-                                        type="password"
-                                        minlength="8"
-                                        autocomplete="new-password"
-                                        required
-                                    >
-                                    <button
-                                        class="profile-password-toggle"
-                                        type="button"
+                                    <input id="password_confirmation" name="password_confirmation" type="password"
+                                        minlength="8" autocomplete="new-password" required>
+                                    <button class="profile-password-toggle" type="button"
                                         data-password-toggle="password_confirmation"
-                                        aria-label="Show password confirmation"
-                                    >
+                                        aria-label="Show password confirmation">
                                         Show
                                     </button>
                                 </div>
@@ -293,7 +262,7 @@
             font-size: 18px;
         }
 
-        .profile-summary-card > p {
+        .profile-summary-card>p {
             margin: 5px 0 12px;
             color: var(--muted);
             font-size: 11px;
@@ -304,7 +273,7 @@
             text-align: left;
         }
 
-        .profile-summary-list > div {
+        .profile-summary-list>div {
             padding: 11px 0;
             border-top: 1px solid var(--line);
         }
@@ -393,9 +362,9 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('[data-password-toggle]').forEach(function (button) {
-                button.addEventListener('click', function () {
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('[data-password-toggle]').forEach(function(button) {
+                button.addEventListener('click', function() {
                     const input = document.getElementById(button.dataset.passwordToggle);
                     if (!input) return;
 

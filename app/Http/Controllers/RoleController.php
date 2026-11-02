@@ -86,7 +86,7 @@ class RoleController extends Controller
         );
 
         return redirect()
-            ->route('roles.show', $role)
+            ->route('rolesPage')
             ->with('success', 'Role created successfully.');
     }
 
@@ -153,7 +153,7 @@ class RoleController extends Controller
         );
 
         return redirect()
-            ->route('roles.show', $role)
+            ->route('rolesPage')
             ->with('success', 'Role updated successfully.');
     }
 

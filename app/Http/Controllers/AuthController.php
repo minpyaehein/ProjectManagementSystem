@@ -5,77 +5,84 @@ namespace App\Http\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthController extends Controller
 {
-    public function showLogin(): View|RedirectResponse
+    public function showLogin(): View
     {
-        if (Auth::check()) {
-            return redirect()->route('homePage');
-        }
-
         return view('login');
     }
 
-    public function login(Request $request): RedirectResponse
-    {
-        $credentials = $request->validate(
+    public function login(
+        Request $request
+    ): RedirectResponse {
+        $validated = $request->validate(
             [
-                'name' => [
+                'username' => [
                     'required',
                     'string',
-                    'max:255',
+                    'min:3',
+                    'max:100',
                 ],
+
                 'password' => [
                     'required',
                     'string',
                 ],
-                'remember' => [
-                    'nullable',
-                    'boolean',
-                ],
             ],
             [
-                'name.required' => 'Please enter your username.',
-                'password.required' => 'Please enter your password.',
+                'username.required' =>
+                    'Please enter your username.',
+
+                'username.min' =>
+                    'The username must contain at least 3 characters.',
+
+                'username.max' =>
+                    'The username cannot exceed 100 characters.',
+
+                'password.required' =>
+                    'Please enter your password.',
             ]
         );
 
-        $remember = $request->boolean('remember');
-
         $authenticated = Auth::attempt(
             [
-                'name' => $credentials['name'],
-                'password' => $credentials['password'],
+                'username' => strtolower(
+                    trim($validated['username'])
+                ),
+
+                'password' =>
+                    $validated['password'],
+
                 'status' => 'Active',
             ],
-            $remember
+            $request->boolean('remember')
         );
 
-        if (!$authenticated) {
-            return back()
-                ->withErrors([
-                    'name' =>
-                        'The username or password is incorrect, or the account is inactive.',
-                ])
-                ->onlyInput('name', 'remember');
+        if (! $authenticated) {
+            throw ValidationException::withMessages([
+                'username' =>
+                    'The username or password is incorrect.',
+            ]);
         }
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('homePage'));
+        return redirect()->intended(
+            route('homePage')
+        );
     }
 
-    public function logout(Request $request): RedirectResponse
-    {
+    public function logout(
+        Request $request
+    ): RedirectResponse {
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()
-            ->route('login')
-            ->with('status', 'You have been signed out successfully.');
+        return redirect()->route('login');
     }
 }

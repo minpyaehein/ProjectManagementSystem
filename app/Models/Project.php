@@ -12,23 +12,9 @@ class Project extends Model
     protected $primaryKey = 'project_id';
 
     protected $fillable = [
-        'name',
-        'customer_id',
-        'supplier_id',
-        'vendor',
-        'accountManagerName',
-        'productCategory',
-        'type',
-        'status',
-        'is_active',
-        'date',
-        'end_date',
-        'remark',
-        'cost',
-        'revenue',
-        'log_id',
-        'created_by',
-        'assigned_user_id',
+        'name', 'customer_id', 'supplier_id', 'vendor', 'accountManagerName',
+        'productCategory', 'type', 'status', 'is_active', 'date', 'end_date',
+        'remark', 'cost', 'revenue', 'log_id', 'created_by', 'assigned_user_id',
     ];
 
     protected function casts(): array
@@ -72,14 +58,18 @@ class Project extends Model
     public function costItems(): HasMany
     {
         return $this->hasMany(ProjectCost::class, 'project_id', 'project_id')
-            ->orderByDesc('item_date')
-            ->orderByDesc('project_cost_id');
+            ->orderByDesc('item_date')->orderByDesc('project_cost_id');
     }
 
     public function revenueItems(): HasMany
     {
         return $this->hasMany(ProjectRevenue::class, 'project_id', 'project_id')
-            ->orderByDesc('item_date')
-            ->orderByDesc('project_revenue_id');
+            ->orderByDesc('item_date')->orderByDesc('project_revenue_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ProjectDocument::class, 'project_id', 'project_id')
+            ->orderByDesc('created_at');
     }
 }

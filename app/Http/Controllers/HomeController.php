@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
@@ -7,7 +6,6 @@ use App\Models\Project;
 use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
@@ -15,29 +13,11 @@ class HomeController extends Controller
 {
     public function index(): View
     {
-        $activeProjectCount = Project::query()
-            ->where('is_active', true)
-            ->where(function (Builder $query): void {
-                $query
-                    ->whereNull('status')
-                    ->orWhereRaw("LOWER(TRIM(status)) <> ?", ['cancelled']);
-            })
-            ->count();
-
-        $inactiveProjectCount = Project::query()
-            ->where(function (Builder $query): void {
-                $query
-                    ->where('is_active', false)
-                    ->orWhereRaw(
-                        "LOWER(TRIM(COALESCE(status, ''))) = ?",
-                        ['cancelled']
-                    );
-            })
-            ->count();
+        $totalProjectCount = Project::query()->count();
 
         $totalProjectCount = Project::query()->count();
-        $customerCount = Customer::query()->count();
-        $supplierCount = Supplier::query()->count();
+        $customerCount     = Customer::query()->count();
+        $supplierCount     = Supplier::query()->count();
 
         $activeUserCount = User::query()
             ->where('status', 'Active')
@@ -70,7 +50,7 @@ class HomeController extends Controller
         }
 
         $monthStart = $reportEndMonth->copy()->subMonths(5);
-        $monthEnd = $reportEndMonth->copy()->addMonth();
+        $monthEnd   = $reportEndMonth->copy()->addMonth();
 
         $projectCountsByMonth = Project::query()
             ->whereNotNull('date')
@@ -78,7 +58,7 @@ class HomeController extends Controller
             ->whereDate('date', '<', $monthEnd->toDateString())
             ->get(['project_id', 'date'])
             ->countBy(
-                fn (Project $project): string => $project->date->format('Y-m')
+                fn(Project $project): string => $project->date->format('Y-m')
             );
 
         $monthlyProjectReport = collect(range(0, 5))
@@ -87,19 +67,19 @@ class HomeController extends Controller
                 $projectCountsByMonth
             ): array {
                 $month = $monthStart->copy()->addMonths($offset);
-                $key = $month->format('Y-m');
+                $key   = $month->format('Y-m');
 
                 return [
-                    'key' => $key,
-                    'label' => $month->format('M'),
+                    'key'        => $key,
+                    'label'      => $month->format('M'),
                     'full_label' => $month->format('F Y'),
-                    'count' => (int) ($projectCountsByMonth[$key] ?? 0),
+                    'count'      => (int) ($projectCountsByMonth[$key] ?? 0),
                 ];
             });
 
         $highestMonthlyProjectCount = (int) $monthlyProjectReport->max('count');
-        $monthlyProjectMaximum = max(1, $highestMonthlyProjectCount);
-        $sixMonthProjectTotal = (int) $monthlyProjectReport->sum('count');
+        $monthlyProjectMaximum      = max(1, $highestMonthlyProjectCount);
+        $sixMonthProjectTotal       = (int) $monthlyProjectReport->sum('count');
 
         $projectStatusCounts = Project::query()
             ->selectRaw(
@@ -110,41 +90,39 @@ class HomeController extends Controller
             ->orderByDesc('total')
             ->get()
             ->map(function ($status): array {
-                $name = (string) $status->status_label;
+                $name       = (string) $status->status_label;
                 $normalized = strtolower(trim($name));
 
                 $statusClass = match ($normalized) {
                     'completed', 'payment' => 'status-success',
-                    'cancelled', 'lost' => 'status-danger',
+                    'cancelled', 'lost'    => 'status-danger',
                     'proposal', 'quotation', 'negotiation' => 'status-warning',
-                    'delivery', 'in progress', 'ongoing' => 'status-info',
+                    'delivery', 'in progress', 'ongoing'   => 'status-info',
                     default => 'status-neutral',
                 };
 
                 $statusIcon = match ($normalized) {
-                    'completed' => '✓',
-                    'payment' => 'P',
-                    'cancelled', 'lost' => '×',
-                    'proposal' => 'P',
-                    'quotation' => 'Q',
+                    'completed'   => '✓',
+                    'payment'     => 'P',
+                    'cancelled', 'lost'      => '×',
+                    'proposal'    => 'P',
+                    'quotation'   => 'Q',
                     'negotiation' => 'N',
-                    'delivery' => 'D',
+                    'delivery'    => 'D',
                     'in progress', 'ongoing' => '●',
-                    default => '•',
+                    default       => '•',
                 };
 
                 return [
-                    'name' => $name,
+                    'name'  => $name,
                     'count' => (int) $status->total,
                     'class' => $statusClass,
-                    'icon' => $statusIcon,
+                    'icon'  => $statusIcon,
                 ];
             })
             ->values();
 
         return view('home', compact(
-            'activeProjectCount',
-            'inactiveProjectCount',
             'totalProjectCount',
             'customerCount',
             'supplierCount',

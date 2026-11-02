@@ -85,9 +85,9 @@
 
                     <input
                         id="name"
-                        name="name"
+                        name="username"
                         type="text"
-                        value="{{ old('name') }}"
+                        value="{{ old('username') }}"
                         placeholder="Enter your username"
                         maxlength="255"
                         autocomplete="username"

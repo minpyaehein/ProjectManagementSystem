@@ -5,10 +5,12 @@ use App\Models\Customer;
 use App\Models\Project;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Support\ProjectDocumentUpload;
 use App\Support\RecordAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -16,7 +18,7 @@ class ProjectController extends Controller
 {
     private const PRODUCT_CATEGORIES = [
         'Server', 'Storage', 'Firewall', 'Network', 'Software', 'Hardware',
-        'Cloud', 'Security', 'Backup', 'Database', 'Virtualization', 'Other',
+        'Cloud', 'Security', 'Backup', 'Database', 'Virtualization',
     ];
 
     private const PROJECT_TYPES = ['New Project', 'Renewal'];
@@ -79,18 +81,19 @@ class ProjectController extends Controller
     public function store(Request $request): RedirectResponse
     {
         abort_unless($request->user()->hasPermission('projects.create'), 403);
-        $validated = $this->validateProject($request);
+        $validated       = $this->validateProject($request);
+        $productCategory = $this->resolveProductCategory($validated);
 
-        Project::query()->create([
+        $project = Project::query()->create([
             'name'               => $validated['name'],
             'customer_id'        => $validated['customer_id'],
             'supplier_id'        => $validated['supplier_id'],
             'vendor'             => $validated['vendor'],
             'accountManagerName' => $validated['accountManagerName'],
-            'productCategory'    => $validated['productCategory'],
+            'productCategory'    => $productCategory,
             'type'               => $validated['type'],
             'status'             => $validated['status'],
-            'is_active'          => true,
+            'is_active'          => strtolower(trim($validated['status'])) !== 'cancelled',
             'date'               => $validated['date'],
             'end_date'           => $validated['end_date'] ?? null,
             'remark'             => $validated['remark'] ?? null,
@@ -101,13 +104,33 @@ class ProjectController extends Controller
             'assigned_user_id'   => $request->user()->user_id,
         ]);
 
+        ProjectDocumentUpload::store(
+            $project,
+            $request->file('documents', []),
+            (int) $request->user()->user_id
+        );
+
         return redirect()->route('projectsPage')->with('success', 'Project created successfully.');
     }
 
     public function show(Request $request, Project $project): View
     {
-        RecordAccess::authorize($request->user(), $project, 'project_access_scope', 'projects.view');
-        $project->load(['customer', 'supplier', 'creator', 'assignedUser']);
+        RecordAccess::authorize(
+            $request->user(),
+            $project,
+            'project_access_scope',
+            'projects.view'
+        );
+
+        $project->load([
+            'customer',
+            'supplier',
+            'creator',
+            'assignedUser',
+            'costItems',
+            'revenueItems',
+            'documents.uploader',
+        ]);
 
         return view('project-detail', compact('project'));
     }
@@ -115,42 +138,37 @@ class ProjectController extends Controller
     public function edit(Request $request, Project $project): View
     {
         RecordAccess::authorize($request->user(), $project, 'project_access_scope', 'projects.edit');
-
-        /*
-         * Do not load costItems or revenueItems here unless those relationships
-         * really exist in Project.php. The edit view can use the aggregate
-         * project.cost and project.revenue fields already stored on the project.
-         */
-        return view(
-            'project-edit',
-            array_merge($this->formData(), compact('project'))
-        );
+        $project->load(['costItems', 'revenueItems', 'documents.uploader']);
+        return view('project-edit', array_merge($this->formData(), compact('project')));
     }
 
     public function update(Request $request, Project $project): RedirectResponse
     {
         RecordAccess::authorize($request->user(), $project, 'project_access_scope', 'projects.edit');
-        $validated = $this->validateProject($request);
+        $validated        = $this->validateProject($request);
+        $productCategory  = $this->resolveProductCategory($validated);
+        $normalizedStatus = strtolower(trim($validated['status']));
 
-        $projectData = [
+        $project->update([
             'name'               => $validated['name'],
             'customer_id'        => $validated['customer_id'],
             'supplier_id'        => $validated['supplier_id'],
             'vendor'             => $validated['vendor'],
             'accountManagerName' => $validated['accountManagerName'],
-            'productCategory'    => $validated['productCategory'],
+            'productCategory'    => $productCategory,
             'type'               => $validated['type'],
             'status'             => $validated['status'],
+            'is_active'          => $normalizedStatus !== 'cancelled',
             'date'               => $validated['date'],
             'end_date'           => $validated['end_date'] ?? null,
             'remark'             => $validated['remark'] ?? null,
-        ];
+        ]);
 
-        if ($request->user()->hasPermission('projects.deactivate')) {
-            $projectData['is_active'] = $request->boolean('is_active');
-        }
-
-        $project->update($projectData);
+        ProjectDocumentUpload::store(
+            $project,
+            $request->file('documents', []),
+            (int) $request->user()->user_id
+        );
 
         return redirect()->route('projectsPage')->with('success', 'Project updated successfully.');
     }
@@ -160,7 +178,6 @@ class ProjectController extends Controller
         RecordAccess::authorize($request->user(), $project, 'project_access_scope', 'projects.deactivate');
         $project->update(['status' => 'Cancelled', 'is_active' => false]);
         User::query()->where('project_id', $project->project_id)->update(['project_id' => null]);
-
         return back()->with('success', 'Project cancelled successfully.');
     }
 
@@ -168,17 +185,12 @@ class ProjectController extends Controller
     {
         RecordAccess::authorize($request->user(), $project, 'project_access_scope', 'projects.deactivate');
         $project->update(['is_active' => ! $project->is_active]);
-
-        return back()->with(
-            'success',
-            $project->is_active ? 'Project activated successfully.' : 'Project deactivated successfully.'
-        );
+        return back()->with('success', $project->is_active ? 'Project activated successfully.' : 'Project deactivated successfully.');
     }
 
     public function export(Request $request): StreamedResponse
     {
         abort_unless($request->user()->hasPermission('projects.view'), 403);
-
         $validated = $request->validate([
             'from_date'       => ['nullable', 'date'],
             'to_date'         => ['nullable', 'date', 'after_or_equal:from_date'],
@@ -193,8 +205,7 @@ class ProjectController extends Controller
 
         $search  = trim((string) ($validated['search'] ?? ''));
         $manager = trim((string) ($validated['account_manager'] ?? ''));
-
-        $query = RecordAccess::apply(Project::query(), $request->user(), 'project_access_scope')
+        $query   = RecordAccess::apply(Project::query(), $request->user(), 'project_access_scope')
             ->with(['customer', 'supplier'])
             ->when($validated['from_date'] ?? null, fn($query, $date) => $query->whereDate('date', '>=', $date))
             ->when($validated['to_date'] ?? null, fn($query, $date) => $query->whereDate('date', '<=', $date))
@@ -224,7 +235,6 @@ class ProjectController extends Controller
 
             fwrite($handle, "\xEF\xBB\xBF");
             fputcsv($handle, ['Project ID', 'Project Name', 'Customer', 'Supplier', 'Status', 'Cost', 'Revenue']);
-
             $query->orderBy('project_id')->chunkById(500, function ($projects) use ($handle): void {
                 foreach ($projects as $project) {
                     fputcsv($handle, [
@@ -238,17 +248,32 @@ class ProjectController extends Controller
                     ]);
                 }
             }, 'project_id', 'project_id');
-
             fclose($handle);
         }, $fileName, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     private function formData(): array
     {
+        $storedCategories = Project::query()
+            ->whereNotNull('productCategory')
+            ->where('productCategory', '<>', '')
+            ->distinct()
+            ->pluck('productCategory')
+            ->map(fn($category): string => trim((string) $category))
+            ->filter();
+
+        $productCategories = collect(self::PRODUCT_CATEGORIES)
+            ->merge($storedCategories)
+            ->reject(fn(string $category): bool => strtolower($category) === 'other')
+            ->unique(fn(string $category): string => strtolower($category))
+            ->sort(fn(string $a, string $b): int => strcasecmp($a, $b))
+            ->values()
+            ->all();
+
         return [
             'customers'         => Customer::query()->where('status', 'Active')->orderBy('name')->get(),
             'suppliers'         => Supplier::query()->where('status', 'Active')->orderBy('name')->get(),
-            'productCategories' => self::PRODUCT_CATEGORIES,
+            'productCategories' => $productCategories,
             'projectTypes'      => self::PROJECT_TYPES,
             'progressStatuses'  => self::PROGRESS_STATUSES,
         ];
@@ -257,19 +282,61 @@ class ProjectController extends Controller
     private function validateProject(Request $request): array
     {
         return $request->validate([
-            'name'               => ['required', 'string', 'max:255'],
-            'customer_id'        => ['required', 'integer', Rule::exists('customers', 'customer_id')],
-            'supplier_id'        => ['required', 'integer', Rule::exists('suppliers', 'supplier_id')],
-            'vendor'             => ['required', 'string', 'max:255'],
-            'accountManagerName' => ['required', 'string', 'max:255'],
-            'productCategory'    => ['required', Rule::in(self::PRODUCT_CATEGORIES)],
-            'type'               => ['required', Rule::in(self::PROJECT_TYPES)],
-            'status'             => ['required', Rule::in(self::PROGRESS_STATUSES)],
-            'is_active'          => ['sometimes', 'boolean'],
-            'date'               => ['required', 'date'],
-            'end_date'           => ['nullable', 'date', 'after_or_equal:date'],
-            'remark'             => ['nullable', 'string', 'max:2000'],
+            'name'                  => ['required', 'string', 'max:255'],
+            'customer_id'           => ['required', 'integer', Rule::exists('customers', 'customer_id')],
+            'supplier_id'           => ['required', 'integer', Rule::exists('suppliers', 'supplier_id')],
+            'vendor'                => ['required', 'string', 'max:255'],
+            'accountManagerName'    => ['required', 'string', 'max:255'],
+            'productCategory'       => ['required', 'string', 'max:255'],
+            'customProductCategory' => [
+                'nullable',
+                'required_if:productCategory,__other__',
+                'string',
+                'max:255',
+                'regex:/^[\pL\pN][\pL\pN\s&()\/+.,\'-]*$/u',
+            ],
+            'documents'             => ['nullable', 'array', 'max:10'],
+            'documents.*'           => [
+                'file',
+                'max:20480',
+                'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,jpg,jpeg,png,zip',
+            ],
+            'type'                  => ['required', Rule::in(self::PROJECT_TYPES)],
+            'status'                => ['required', Rule::in(self::PROGRESS_STATUSES)],
+            'is_active'             => ['sometimes', 'boolean'],
+            'date'                  => ['required', 'date'],
+            'end_date'              => ['nullable', 'date', 'after_or_equal:date'],
+            'remark'                => ['nullable', 'string', 'max:2000'],
+        ], [
+            'productCategory.required'          => 'Please select a product category.',
+            'customProductCategory.required_if' => 'Please enter the new product category.',
+            'customProductCategory.max'         => 'The new product category cannot exceed 255 characters.',
+            'customProductCategory.regex'       => 'The new product category contains invalid characters.',
+            'documents.max'                     => 'You may upload a maximum of 10 documents at one time.',
+            'documents.*.file'                  => 'Each project document must be a valid file.',
+            'documents.*.max'                   => 'Each project document cannot exceed 20 MB.',
+            'documents.*.mimes'                 => 'Project documents must be PDF, Office, text, CSV, image, or ZIP files.',
         ]);
+    }
+
+    private function resolveProductCategory(array $validated): string
+    {
+        if ($validated['productCategory'] !== '__other__') {
+            return trim($validated['productCategory']);
+        }
+
+        $customCategory = trim((string) ($validated['customProductCategory'] ?? ''));
+        if ($customCategory === '') {
+            throw ValidationException::withMessages([
+                'customProductCategory' => 'Please enter the new product category.',
+            ]);
+        }
+
+        $existingCategory = Project::query()
+            ->whereRaw('LOWER(TRIM(productCategory)) = ?', [mb_strtolower($customCategory)])
+            ->value('productCategory');
+
+        return $existingCategory ? trim((string) $existingCategory) : $customCategory;
     }
 
     private function safeCsvValue(mixed $value): string

@@ -84,6 +84,7 @@
                         <thead>
                             <tr>
                                 <th>User</th>
+                                <th>Username</th>
                                 <th>Email</th>
                                 <th>Role</th>
                                 <th>Updated</th>
@@ -100,6 +101,10 @@
                                         <div class="small-muted">
                                             USR-{{ str_pad((string) $user->user_id, 4, '0', STR_PAD_LEFT) }}
                                         </div>
+                                    </td>
+
+                                    <td>
+                                        <span class="item-name">{{ $user->username }}</span>
                                     </td>
 
                                     <td>
@@ -140,28 +145,24 @@
 
                                             @if (auth()->user()->hasPermission('users.deactivate') && auth()->id() !== $user->user_id)
                                                 @if ($user->status === 'Inactive')
-                                                    <form action="{{ route('users.activate', $user) }}"
-                                                    method="POST"
-                                                    onsubmit="return confirm('Activate this user?');"
-                                                    >
-                                                    @csrf
-                                                    @method('PATCH')
+                                                    <form action="{{ route('users.activate', $user) }}" method="POST"
+                                                        onsubmit="return confirm('Activate this user?');">
+                                                        @csrf
+                                                        @method('PATCH')
 
-                                                    <button class="action-btn action-view" type="submit">
-                                                        Activate
-                                                    </button>
+                                                        <button class="action-btn action-view" type="submit">
+                                                            Activate
+                                                        </button>
                                                     </form>
                                                 @else
-                                                    <form action="{{ route('users.deactivate', $user) }}"
-                                                    method="POST"
-                                                    onsubmit="return confirm('Deactivate this user?');"
-                                                    >
-                                                    @csrf
-                                                    @method('PATCH')
+                                                    <form action="{{ route('users.deactivate', $user) }}" method="POST"
+                                                        onsubmit="return confirm('Deactivate this user?');">
+                                                        @csrf
+                                                        @method('PATCH')
 
-                                                    <button class="action-btn action-delete" type="submit">
-                                                        Deactivate
-                                                    </button>
+                                                        <button class="action-btn action-delete" type="submit">
+                                                            Deactivate
+                                                        </button>
                                                     </form>
                                                 @endif
                                             @endif

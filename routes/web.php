@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectDocumentController;
 use App\Http\Controllers\ProjectFinancialItemController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SupplierController;
@@ -79,6 +80,15 @@ Route::middleware('auth')->group(function (): void {
     | Projects
     |--------------------------------------------------------------------------
     */
+    Route::get(
+        '/projects/{project}/documents/{document}/download',
+        [ProjectDocumentController::class, 'download']
+    )->middleware('permission:projects.view')->name('projects.documents.download');
+
+    Route::delete(
+        '/projects/{project}/documents/{document}',
+        [ProjectDocumentController::class, 'destroy']
+    )->middleware('permission:projects.edit')->name('projects.documents.destroy');
 
     Route::get(
         '/projects-export',
@@ -107,6 +117,20 @@ Route::middleware('auth')->group(function (): void {
     )
         ->middleware('permission:projects.create')
         ->name('projects.store');
+
+    Route::get(
+        '/projects/{project}/documents/{document}/download',
+        [ProjectDocumentController::class, 'download']
+    )
+        ->middleware('permission:projects.view')
+        ->name('projects.documents.download');
+
+    Route::delete(
+        '/projects/{project}/documents/{document}',
+        [ProjectDocumentController::class, 'destroy']
+    )
+        ->middleware('permission:projects.edit')
+        ->name('projects.documents.destroy');
 
     Route::get(
         '/projects/{project}/edit',
@@ -476,7 +500,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get(
         '/activity',
-        fn () => view('activity-logs')
+        fn() => view('activity-logs')
     )
         ->middleware('permission:logs.view')
         ->name('activityPage');

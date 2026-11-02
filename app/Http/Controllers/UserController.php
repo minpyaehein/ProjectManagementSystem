@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
@@ -28,6 +27,7 @@ class UserController extends Controller
                 $query->where(function ($subQuery) use ($search): void {
                     $subQuery
                         ->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('username', 'like', '%' .$search . '%')
                         ->orWhere('email', 'like', '%' . $search . '%')
                         ->orWhere('phone', 'like', '%' . $search . '%')
                         ->orWhereHas('role', function ($roleQuery) use ($search): void {
@@ -65,19 +65,27 @@ class UserController extends Controller
     {
         $validated = $request->validate(
             [
-                'name' => [
+                'name'     => [
                     'required',
                     'string',
                     'max:255',
                     Rule::unique('users', 'name'),
                 ],
-                'email' => [
+                'username' => [
+                    'required',
+                    'string',
+                    'min:3',
+                    'max:100',
+                    'regex:/^[a-zA-Z0-9._-]+$/',
+                    Rule::unique('users', 'username'),
+                ],
+                'email'    => [
                     'nullable',
                     'email',
                     'max:255',
                     Rule::unique('users', 'email'),
                 ],
-                'phone' => [
+                'phone'    => [
                     'nullable',
                     'string',
                     'max:30',
@@ -89,28 +97,38 @@ class UserController extends Controller
                     'min:8',
                     'confirmed',
                 ],
-                'role_id' => [
+                'role_id'  => [
                     'required',
                     'integer',
                     Rule::exists('role', 'role_id'),
                 ],
-                'status' => [
+                'status'   => [
                     'required',
                     Rule::in(['Active', 'Inactive']),
                 ],
             ],
             [
-                'name.required' => 'Please enter the user name.',
-                'name.unique' => 'This login name is already being used.',
-                'email.email' => 'Please enter a valid email address.',
-                'email.unique' => 'This email address is already being used.',
-                'phone.regex' => 'The phone number may contain only numbers, spaces, +, -, and parentheses.',
-                'password.required' => 'Please enter a password.',
-                'password.min' => 'The password must contain at least 8 characters.',
+                'name.required'      => 'Please enter the user name.',
+                'name.unique'        => 'This login name is already being used.',
+                'email.email'        => 'Please enter a valid email address.',
+                'email.unique'       => 'This email address is already being used.',
+                'phone.regex'        => 'The phone number may contain only numbers, spaces, +, -, and parentheses.',
+                'password.required'  => 'Please enter a password.',
+                'password.min'       => 'The password must contain at least 8 characters.',
                 'password.confirmed' => 'The password confirmation does not match.',
-                'role_id.required' => 'Please select a role.',
-                'role_id.exists' => 'The selected role does not exist.',
-                'status.required' => 'Please select a user status.',
+                'role_id.required'   => 'Please select a role.',
+                'role_id.exists'     => 'The selected role does not exist.',
+                'status.required'    => 'Please select a user status.',
+                'username.required'  =>
+                'Please enter a username.',
+
+                'username.min'       => 'The username must contain at least 3 characters.',
+
+                'username.max'       => 'The username cannot exceed 100 characters.',
+
+                'username.regex'     => 'The username may contain only letters, numbers, dots, underscores, and hyphens.',
+
+                'username.unique'    => 'This username is already being used.',
             ]
         );
 
@@ -165,17 +183,17 @@ class UserController extends Controller
 
         $selectedProjectIds = $user->assignedProjects()
             ->pluck('project.project_id')
-            ->map(fn ($id): int => (int) $id)
+            ->map(fn($id): int => (int) $id)
             ->all();
 
         $selectedCustomerIds = $user->assignedCustomers()
             ->pluck('customers.customer_id')
-            ->map(fn ($id): int => (int) $id)
+            ->map(fn($id): int => (int) $id)
             ->all();
 
         $selectedSupplierIds = $user->assignedSuppliers()
             ->pluck('suppliers.supplier_id')
-            ->map(fn ($id): int => (int) $id)
+            ->map(fn($id): int => (int) $id)
             ->all();
 
         return view(
@@ -197,51 +215,63 @@ class UserController extends Controller
     {
         $validated = $request->validate(
             [
-                'name' => [
+                'name'           => [
                     'required',
                     'string',
                     'max:255',
                     Rule::unique('users', 'name')
                         ->ignore($user->user_id, 'user_id'),
                 ],
-                'email' => [
+                'username'       => [
+                    'required',
+                    'string',
+                    'min:3',
+                    'max:100',
+                    'regex:/^[a-zA-Z0-9._-]+$/',
+                    Rule::unique('users', 'username')
+                        ->ignore(
+                            $user->user_id,
+                            'user_id'
+                        ),
+                ],
+                'email'          => [
                     'nullable',
                     'email',
                     'max:255',
                     Rule::unique('users', 'email')
                         ->ignore($user->user_id, 'user_id'),
                 ],
-                'phone' => [
+                'phone'          => [
                     'nullable',
                     'string',
                     'max:30',
                     'regex:/^[0-9+\-\s()]+$/',
                 ],
-                'password' => [
+                'password'       => [
                     'nullable',
                     'string',
                     'min:8',
                     'confirmed',
                 ],
-                'role_id' => [
+                'role_id'        => [
                     'required',
                     'integer',
                     Rule::exists('role', 'role_id'),
                 ],
-                'status' => [
+                'status'         => [
                     'required',
                     Rule::in(['Active', 'Inactive']),
                 ],
-                'project_ids' => [
+                'project_ids'    => [
                     'nullable',
                     'array',
                 ],
-                'project_ids.*' => [
+                'project_ids.*'  => [
                     'integer',
                     'distinct',
                     Rule::exists('project', 'project_id'),
                 ],
-                'customer_ids' => [
+                'customer_ids'   => [
                     'nullable',
                     'array',
                 ],
@@ -250,7 +280,7 @@ class UserController extends Controller
                     'distinct',
                     Rule::exists('customers', 'customer_id'),
                 ],
-                'supplier_ids' => [
+                'supplier_ids'   => [
                     'nullable',
                     'array',
                 ],
@@ -261,17 +291,19 @@ class UserController extends Controller
                 ],
             ],
             [
-                'name.required' => 'Please enter the user name.',
-                'name.unique' => 'This login name is already being used.',
-                'email.email' => 'Please enter a valid email address.',
-                'email.unique' => 'This email address is already being used.',
-                'phone.regex' => 'The phone number may contain only numbers, spaces, +, -, and parentheses.',
-                'password.min' => 'The password must contain at least 8 characters.',
-                'password.confirmed' => 'The password confirmation does not match.',
-                'role_id.required' => 'Please select a role.',
-                'role_id.exists' => 'The selected role does not exist.',
-                'status.required' => 'Please select a user status.',
-                'project_ids.*.exists' => 'One of the selected projects does not exist.',
+                'name.required'         => 'Please enter the user name.',
+                'name.unique'           => 'This name is already being used.',
+                'username.required'     => 'Please enter the username.',
+                'username.unique'       => 'This username is already being used.',
+                'email.email'           => 'Please enter a valid email address.',
+                'email.unique'          => 'This email address is already being used.',
+                'phone.regex'           => 'The phone number may contain only numbers, spaces, +, -, and parentheses.',
+                'password.min'          => 'The password must contain at least 8 characters.',
+                'password.confirmed'    => 'The password confirmation does not match.',
+                'role_id.required'      => 'Please select a role.',
+                'role_id.exists'        => 'The selected role does not exist.',
+                'status.required'       => 'Please select a user status.',
+                'project_ids.*.exists'  => 'One of the selected projects does not exist.',
                 'customer_ids.*.exists' => 'One of the selected customers does not exist.',
                 'supplier_ids.*.exists' => 'One of the selected suppliers does not exist.',
             ]
@@ -281,11 +313,12 @@ class UserController extends Controller
 
         DB::transaction(function () use ($validated, $user, $role): void {
             $userData = [
-                'name' => $validated['name'],
-                'email' => $validated['email'] ?? null,
-                'phone' => $validated['phone'] ?? null,
+                'name'    => $validated['name'],
+                'username'=> $validated['username'],
+                'email'   => $validated['email'] ?? null,
+                'phone'   => $validated['phone'] ?? null,
                 'role_id' => $validated['role_id'],
-                'status' => $validated['status'],
+                'status'  => $validated['status'],
             ];
 
             if (! empty($validated['password'])) {

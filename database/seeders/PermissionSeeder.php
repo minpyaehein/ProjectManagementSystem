@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Permission;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class PermissionSeeder extends Seeder
 {
@@ -11,10 +12,10 @@ class PermissionSeeder extends Seeder
     {
         $permissions = [
             /*
-             * Projects
-             *
-             * Projects intentionally do not use a Deactivate permission.
-             */
+            |--------------------------------------------------------------------------
+            | Projects
+            |--------------------------------------------------------------------------
+            */
             [
                 'name' => 'View Projects',
                 'slug' => 'projects.view',
@@ -28,13 +29,28 @@ class PermissionSeeder extends Seeder
                 'slug' => 'projects.edit',
             ],
             [
+                'name' => 'Deactivate or Reactivate Projects',
+                'slug' => 'projects.deactivate',
+            ],
+            [
                 'name' => 'Export Projects',
                 'slug' => 'projects.export',
             ],
 
             /*
-             * Customers
-             */
+            |--------------------------------------------------------------------------
+            | Project Documents
+            |--------------------------------------------------------------------------
+            |
+            | Downloads use projects.view and uploads/removal use projects.edit,
+            | so separate document permissions are not required.
+            */
+
+            /*
+            |--------------------------------------------------------------------------
+            | Customers
+            |--------------------------------------------------------------------------
+            */
             [
                 'name' => 'View Customers',
                 'slug' => 'customers.view',
@@ -53,8 +69,10 @@ class PermissionSeeder extends Seeder
             ],
 
             /*
-             * Suppliers
-             */
+            |--------------------------------------------------------------------------
+            | Suppliers
+            |--------------------------------------------------------------------------
+            */
             [
                 'name' => 'View Suppliers',
                 'slug' => 'suppliers.view',
@@ -73,8 +91,10 @@ class PermissionSeeder extends Seeder
             ],
 
             /*
-             * Users
-             */
+            |--------------------------------------------------------------------------
+            | Users
+            |--------------------------------------------------------------------------
+            */
             [
                 'name' => 'View Users',
                 'slug' => 'users.view',
@@ -97,8 +117,10 @@ class PermissionSeeder extends Seeder
             ],
 
             /*
-             * Roles and permissions
-             */
+            |--------------------------------------------------------------------------
+            | Roles and Permissions
+            |--------------------------------------------------------------------------
+            */
             [
                 'name' => 'View Roles',
                 'slug' => 'roles.view',
@@ -117,8 +139,10 @@ class PermissionSeeder extends Seeder
             ],
 
             /*
-             * Project tasks and financial records
-             */
+            |--------------------------------------------------------------------------
+            | Project Tasks and Financial Records
+            |--------------------------------------------------------------------------
+            */
             [
                 'name' => 'Manage Project Tasks',
                 'slug' => 'project-tasks.manage',
@@ -129,31 +153,37 @@ class PermissionSeeder extends Seeder
             ],
 
             /*
-             * Activity logs
-             */
+            |--------------------------------------------------------------------------
+            | Activity Logs
+            |--------------------------------------------------------------------------
+            */
             [
                 'name' => 'View Activity Logs',
                 'slug' => 'logs.view',
             ],
 
             /*
-             * Full administration access
-             */
+            |--------------------------------------------------------------------------
+            | Full Administration Access
+            |--------------------------------------------------------------------------
+            */
             [
                 'name' => 'Full Administrator Access',
                 'slug' => 'admin.full',
             ],
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::query()->updateOrCreate(
-                [
-                    'slug' => $permission['slug'],
-                ],
-                [
-                    'name' => $permission['name'],
-                ]
-            );
-        }
+        DB::transaction(function () use ($permissions): void {
+            foreach ($permissions as $permission) {
+                Permission::query()->updateOrCreate(
+                    [
+                        'slug' => $permission['slug'],
+                    ],
+                    [
+                        'name' => $permission['name'],
+                    ]
+                );
+            }
+        });
     }
 }

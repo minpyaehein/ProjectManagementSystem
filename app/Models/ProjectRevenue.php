@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ProjectRevenue extends Model
 {
     protected $table = 'project_revenues';
+
     protected $primaryKey = 'project_revenue_id';
 
     protected $fillable = [

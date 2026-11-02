@@ -6,15 +6,15 @@
 @section('content')
     @php
         $selectedProjectIds = collect(old('project_ids', $selectedProjectIds ?? []))
-            ->map(fn ($id): int => (int) $id)
+            ->map(fn($id): int => (int) $id)
             ->all();
 
         $selectedCustomerIds = collect(old('customer_ids', $selectedCustomerIds ?? []))
-            ->map(fn ($id): int => (int) $id)
+            ->map(fn($id): int => (int) $id)
             ->all();
 
         $selectedSupplierIds = collect(old('supplier_ids', $selectedSupplierIds ?? []))
-            ->map(fn ($id): int => (int) $id)
+            ->map(fn($id): int => (int) $id)
             ->all();
     @endphp
 
@@ -59,42 +59,45 @@
         @endif
 
         <div class="card user-edit-card">
-            <form
-                action="{{ route('users.update', $user) }}"
-                method="POST"
-                id="userEditForm"
-            >
+            <form action="{{ route('users.update', $user) }}" method="POST" id="userEditForm">
                 @csrf
                 @method('PUT')
 
                 <div class="form-grid">
                     <div class="field">
                         <label for="name">Full name</label>
-                        <input
-                            id="name"
-                            name="name"
-                            type="text"
-                            value="{{ old('name', $user->name) }}"
-                            maxlength="255"
-                            autocomplete="name"
-                            autofocus
-                            required
-                        >
+                        <input id="name" name="name" type="text" value="{{ old('name', $user->name) }}"
+                            maxlength="255" autocomplete="name" autofocus required>
                         @error('name')
                             <span class="field-error">{{ $message }}</span>
                         @enderror
                     </div>
 
                     <div class="field">
+                        <label for="username">
+                            Username
+                        </label>
+
+                        <input id="username" name="username" type="text"
+                            value="{{ old('username', $user->username) }}" minlength="3"
+                            maxlength="100" pattern="[a-zA-Z0-9._-]+" autocomplete="username" spellcheck="false" required>
+
+                        <small class="small-muted">
+                            Letters, numbers, dots, underscores, and
+                            hyphens are allowed.
+                        </small>
+
+                        @error('username')
+                            <span class="field-error">
+                                {{ $message }}
+                            </span>
+                        @enderror
+                    </div>
+
+                    <div class="field">
                         <label for="email">Email address</label>
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value="{{ old('email', $user->email) }}"
-                            maxlength="255"
-                            autocomplete="email"
-                        >
+                        <input id="email" name="email" type="email" value="{{ old('email', $user->email) }}"
+                            maxlength="255" autocomplete="email">
                         @error('email')
                             <span class="field-error">{{ $message }}</span>
                         @enderror
@@ -102,16 +105,8 @@
 
                     <div class="field">
                         <label for="phone">Phone number</label>
-                        <input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            value="{{ old('phone', $user->phone) }}"
-                            maxlength="30"
-                            autocomplete="tel"
-                            inputmode="tel"
-                            placeholder="e.g. 09 123 456 789"
-                        >
+                        <input id="phone" name="phone" type="tel" value="{{ old('phone', $user->phone) }}"
+                            maxlength="30" autocomplete="tel" inputmode="tel" placeholder="e.g. 09 123 456 789">
                         @error('phone')
                             <span class="field-error">{{ $message }}</span>
                         @enderror
@@ -123,16 +118,10 @@
                             <option value="">Select role</option>
 
                             @foreach ($roles as $role)
-                                <option
-                                    value="{{ $role->role_id }}"
+                                <option value="{{ $role->role_id }}"
                                     data-project-scope="{{ $role->project_access_scope }}"
                                     data-customer-scope="{{ $role->customer_access_scope }}"
-                                    data-supplier-scope="{{ $role->supplier_access_scope }}"
-                                    @selected(
-                                        (string) old('role_id', $user->role_id)
-                                        === (string) $role->role_id
-                                    )
-                                >
+                                    data-supplier-scope="{{ $role->supplier_access_scope }}" @selected((string) old('role_id', $user->role_id) === (string) $role->role_id)>
                                     {{ $role->name }}
                                 </option>
                             @endforeach
@@ -144,14 +133,8 @@
 
                     <div class="field">
                         <label for="password">New password</label>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            autocomplete="new-password"
-                            minlength="8"
-                            placeholder="Leave blank to keep current password"
-                        >
+                        <input id="password" name="password" type="password" autocomplete="new-password" minlength="8"
+                            placeholder="Leave blank to keep current password">
                         <small class="small-muted">
                             Leave blank unless you want to change the password.
                         </small>
@@ -162,13 +145,8 @@
 
                     <div class="field">
                         <label for="password_confirmation">Confirm new password</label>
-                        <input
-                            id="password_confirmation"
-                            name="password_confirmation"
-                            type="password"
-                            autocomplete="new-password"
-                            minlength="8"
-                        >
+                        <input id="password_confirmation" name="password_confirmation" type="password"
+                            autocomplete="new-password" minlength="8">
                     </div>
 
                     <div class="field">
@@ -219,31 +197,14 @@
                             <label class="assignment-search-label" for="projectAssignmentSearch">
                                 Search projects
                             </label>
-                            <input
-                                class="assignment-search"
-                                id="projectAssignmentSearch"
-                                type="search"
-                                placeholder="Search projects..."
-                                data-search-group="project"
-                                autocomplete="off"
-                            >
+                            <input class="assignment-search" id="projectAssignmentSearch" type="search"
+                                placeholder="Search projects..." data-search-group="project" autocomplete="off">
 
                             <div class="assignment-list" data-list-group="project">
                                 @forelse ($projects as $project)
                                     <label class="assignment-option" data-assignment-option>
-                                        <input
-                                            type="checkbox"
-                                            name="project_ids[]"
-                                            value="{{ $project->project_id }}"
-                                            data-assignment-checkbox="project"
-                                            @checked(
-                                                in_array(
-                                                    (int) $project->project_id,
-                                                    $selectedProjectIds,
-                                                    true
-                                                )
-                                            )
-                                        >
+                                        <input type="checkbox" name="project_ids[]" value="{{ $project->project_id }}"
+                                            data-assignment-checkbox="project" @checked(in_array((int) $project->project_id, $selectedProjectIds, true))>
                                         <span>
                                             <strong>{{ $project->name }}</strong>
                                             <small>
@@ -279,31 +240,15 @@
                             <label class="assignment-search-label" for="customerAssignmentSearch">
                                 Search customers
                             </label>
-                            <input
-                                class="assignment-search"
-                                id="customerAssignmentSearch"
-                                type="search"
-                                placeholder="Search customers..."
-                                data-search-group="customer"
-                                autocomplete="off"
-                            >
+                            <input class="assignment-search" id="customerAssignmentSearch" type="search"
+                                placeholder="Search customers..." data-search-group="customer" autocomplete="off">
 
                             <div class="assignment-list" data-list-group="customer">
                                 @forelse ($customers as $customer)
                                     <label class="assignment-option" data-assignment-option>
-                                        <input
-                                            type="checkbox"
-                                            name="customer_ids[]"
-                                            value="{{ $customer->customer_id }}"
-                                            data-assignment-checkbox="customer"
-                                            @checked(
-                                                in_array(
-                                                    (int) $customer->customer_id,
-                                                    $selectedCustomerIds,
-                                                    true
-                                                )
-                                            )
-                                        >
+                                        <input type="checkbox" name="customer_ids[]"
+                                            value="{{ $customer->customer_id }}" data-assignment-checkbox="customer"
+                                            @checked(in_array((int) $customer->customer_id, $selectedCustomerIds, true))>
                                         <span>
                                             <strong>{{ $customer->name }}</strong>
                                             <small>
@@ -339,31 +284,15 @@
                             <label class="assignment-search-label" for="supplierAssignmentSearch">
                                 Search suppliers
                             </label>
-                            <input
-                                class="assignment-search"
-                                id="supplierAssignmentSearch"
-                                type="search"
-                                placeholder="Search suppliers..."
-                                data-search-group="supplier"
-                                autocomplete="off"
-                            >
+                            <input class="assignment-search" id="supplierAssignmentSearch" type="search"
+                                placeholder="Search suppliers..." data-search-group="supplier" autocomplete="off">
 
                             <div class="assignment-list" data-list-group="supplier">
                                 @forelse ($suppliers as $supplier)
                                     <label class="assignment-option" data-assignment-option>
-                                        <input
-                                            type="checkbox"
-                                            name="supplier_ids[]"
-                                            value="{{ $supplier->supplier_id }}"
-                                            data-assignment-checkbox="supplier"
-                                            @checked(
-                                                in_array(
-                                                    (int) $supplier->supplier_id,
-                                                    $selectedSupplierIds,
-                                                    true
-                                                )
-                                            )
-                                        >
+                                        <input type="checkbox" name="supplier_ids[]"
+                                            value="{{ $supplier->supplier_id }}" data-assignment-checkbox="supplier"
+                                            @checked(in_array((int) $supplier->supplier_id, $selectedSupplierIds, true))>
                                         <span>
                                             <strong>{{ $supplier->name }}</strong>
                                             <small>
@@ -392,10 +321,7 @@
                 </div>
             </form>
 
-            @if (
-                auth()->user()->hasPermission('users.edit')
-                || auth()->user()->hasPermission('users.manage')
-            )
+            @if (auth()->user()->hasPermission('users.edit') || auth()->user()->hasPermission('users.manage'))
                 <div class="user-password-reset-section">
                     <div>
                         <span class="user-password-reset-kicker">Account security</span>
@@ -406,11 +332,8 @@
                         </p>
                     </div>
 
-                    <form
-                        action="{{ route('users.reset-password', $user) }}"
-                        method="POST"
-                        onsubmit="return confirm('Reset this user password to Default@12345?');"
-                    >
+                    <form action="{{ route('users.reset-password', $user) }}" method="POST"
+                        onsubmit="return confirm('Reset this user password to Default@12345?');">
                         @csrf
                         @method('PATCH')
                         <button class="btn user-reset-password-button" type="submit">
@@ -580,7 +503,7 @@
             height: 16px;
         }
 
-        .assignment-option > span {
+        .assignment-option>span {
             min-width: 0;
         }
 
@@ -703,7 +626,7 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('userEditForm');
             const roleSelect = document.getElementById('role_id');
             const emptyState = document.getElementById('assignmentEmptyState');
@@ -736,7 +659,7 @@
                 }
 
                 const selectedCount = getCheckboxes(groupName)
-                    .filter(function (checkbox) {
+                    .filter(function(checkbox) {
                         return checkbox.checked;
                     }).length;
 
@@ -756,7 +679,7 @@
 
                 let visibleGroupCount = 0;
 
-                Object.keys(groups).forEach(function (groupName) {
+                Object.keys(groups).forEach(function(groupName) {
                     const group = groups[groupName];
                     const visible = scopes[groupName] === 'assigned';
 
@@ -776,20 +699,20 @@
                 }
             }
 
-            Object.keys(groups).forEach(function (groupName) {
-                getCheckboxes(groupName).forEach(function (checkbox) {
-                    checkbox.addEventListener('change', function () {
+            Object.keys(groups).forEach(function(groupName) {
+                getCheckboxes(groupName).forEach(function(checkbox) {
+                    checkbox.addEventListener('change', function() {
                         updateCount(groupName);
                     });
                 });
             });
 
             form.querySelectorAll('[data-select-group]').forEach(
-                function (button) {
-                    button.addEventListener('click', function () {
+                function(button) {
+                    button.addEventListener('click', function() {
                         const groupName = button.dataset.selectGroup;
 
-                        getCheckboxes(groupName).forEach(function (checkbox) {
+                        getCheckboxes(groupName).forEach(function(checkbox) {
                             const option = checkbox.closest(
                                 '[data-assignment-option]'
                             );
@@ -805,11 +728,11 @@
             );
 
             form.querySelectorAll('[data-clear-group]').forEach(
-                function (button) {
-                    button.addEventListener('click', function () {
+                function(button) {
+                    button.addEventListener('click', function() {
                         const groupName = button.dataset.clearGroup;
 
-                        getCheckboxes(groupName).forEach(function (checkbox) {
+                        getCheckboxes(groupName).forEach(function(checkbox) {
                             checkbox.checked = false;
                         });
 
@@ -819,8 +742,8 @@
             );
 
             form.querySelectorAll('[data-search-group]').forEach(
-                function (searchInput) {
-                    searchInput.addEventListener('input', function () {
+                function(searchInput) {
+                    searchInput.addEventListener('input', function() {
                         const groupName = searchInput.dataset.searchGroup;
                         const searchValue = searchInput.value
                             .trim()
@@ -832,12 +755,12 @@
 
                         list?.querySelectorAll(
                             '[data-assignment-option]'
-                        ).forEach(function (option) {
+                        ).forEach(function(option) {
                             option.classList.toggle(
                                 'is-filtered-out',
                                 !option.textContent
-                                    .toLowerCase()
-                                    .includes(searchValue)
+                                .toLowerCase()
+                                .includes(searchValue)
                             );
                         });
                     });

@@ -251,6 +251,8 @@
                 </div>
             </div>
 
+            @include('partials.project-document-detail-list')
+
             <div class="project-detail-header-actions" style="margin: 20px;">
                 @if (auth()->user()->hasPermission('projects.edit'))
                     <a class="project-detail-edit-button" href="{{ route('projects.edit', $project) }}">

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
@@ -23,21 +22,33 @@ class ProfileController extends Controller
 
         $validated = $request->validate(
             [
-                'name' => [
+                'name'     => [
                     'required',
                     'string',
                     'max:255',
                     Rule::unique('users', 'name')
                         ->ignore($user->user_id, 'user_id'),
                 ],
-                'email' => [
+                'username' => [
+                    'required',
+                    'string',
+                    'min:3',
+                    'max:100',
+                    'regex:/^[a-zA-Z0-9._-]+$/',
+                    Rule::unique('users', 'username')
+                        ->ignore(
+                            $request->user()->user_id,
+                            'user_id'
+                        ),
+                ],
+                'email'    => [
                     'nullable',
                     'email',
                     'max:255',
                     Rule::unique('users', 'email')
                         ->ignore($user->user_id, 'user_id'),
                 ],
-                'phone' => [
+                'phone'    => [
                     'nullable',
                     'string',
                     'max:30',
@@ -46,18 +57,19 @@ class ProfileController extends Controller
             ],
             [
                 'name.required' => 'Please enter your full name.',
-                'name.unique' => 'This name is already being used.',
-                'email.email' => 'Please enter a valid email address.',
-                'email.unique' => 'This email address is already being used.',
-                'phone.regex' =>
-                    'The phone number may contain only numbers, spaces, +, -, and parentheses.',
+                'name.unique'   => 'This name is already being used.',
+                'email.email'   => 'Please enter a valid email address.',
+                'email.unique'  => 'This email address is already being used.',
+                'phone.regex'   =>
+                'The phone number may contain only numbers, spaces, +, -, and parentheses.',
             ]
         );
 
         $user->update([
-            'name' => trim($validated['name']),
-            'email' => $this->nullableTrim($validated['email'] ?? null),
-            'phone' => $this->nullableTrim($validated['phone'] ?? null),
+            'name'     => trim($validated['name']),
+            'username' => $validated['username'],
+            'email'    => $this->nullableTrim($validated['email'] ?? null),
+            'phone'    => $this->nullableTrim($validated['phone'] ?? null),
         ]);
 
         return redirect()
@@ -77,7 +89,7 @@ class ProfileController extends Controller
                     'string',
                     'current_password',
                 ],
-                'password' => [
+                'password'         => [
                     'required',
                     'string',
                     'min:8',
@@ -86,18 +98,18 @@ class ProfileController extends Controller
                 ],
             ],
             [
-                'current_password.required' =>
-                    'Please enter your current password.',
+                'current_password.required'         =>
+                'Please enter your current password.',
                 'current_password.current_password' =>
-                    'The current password is incorrect.',
-                'password.required' =>
-                    'Please enter a new password.',
-                'password.min' =>
-                    'The new password must contain at least 8 characters.',
-                'password.confirmed' =>
-                    'The new password confirmation does not match.',
-                'password.different' =>
-                    'The new password must be different from the current password.',
+                'The current password is incorrect.',
+                'password.required'                 =>
+                'Please enter a new password.',
+                'password.min'                      =>
+                'The new password must contain at least 8 characters.',
+                'password.confirmed'                =>
+                'The new password confirmation does not match.',
+                'password.different'                =>
+                'The new password must be different from the current password.',
             ]
         );
 

@@ -69,6 +69,13 @@
                     </div>
 
                     <div>
+                        <dt>Username</dt>
+                        <dd>
+                            {{ $user->username }}
+                        </dd>
+                    </div>
+
+                    <div>
                         <dt>Email address</dt>
                         <dd>
                             @if ($user->email)

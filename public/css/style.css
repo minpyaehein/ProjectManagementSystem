@@ -245,9 +245,10 @@ textarea {
 
 .topbar {
     height: 76px;
+    display: none;
     background: #fff;
     border-bottom: 1px solid var(--line);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: space-between;
     padding: 0 34px
@@ -746,7 +747,7 @@ tr:last-child td {
     }
 
     .topbar {
-        padding: 0 22px
+        padding: 0 22px;
     }
 
     .stats {
@@ -790,6 +791,7 @@ tr:last-child td {
     }
 
     .topbar {
+        display: flex;
         height: 60px;
         padding: 0 16px
     }
@@ -1115,6 +1117,10 @@ tr:last-child td {
 
     .pagination-links {
         width: 100%;
+    }
+
+    .topbar{
+        display: flex;
     }
 }
 
@@ -3019,6 +3025,16 @@ tr:last-child td {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+.assignment-search{
+    width: 100%;
+    border: 1px solid #dfe6df;
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px 13px;
+    outline: none;
+    color: var(--ink);
 }
 
 @media (max-width: 900px) {
