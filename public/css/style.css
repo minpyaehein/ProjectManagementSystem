@@ -2317,9 +2317,9 @@ tr:last-child td {
 .project-entry-alert {
     margin-bottom: 22px;
     padding: 14px 16px;
-    border: 1px solid #f3c7c7;
     border-radius: 12px;
-    background: #fff5f5;
+    border: 1px solid #a7d8ba;
+    background-color: #edf9f1;
 }
 
 .project-section-heading {

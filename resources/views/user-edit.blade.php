@@ -106,7 +106,7 @@
                     <div class="field">
                         <label for="phone">Phone number</label>
                         <input id="phone" name="phone" type="tel" value="{{ old('phone', $user->phone) }}"
-                            maxlength="30" autocomplete="tel" inputmode="tel" placeholder="e.g. 09 123 456 789">
+                            maxlength="15" autocomplete="tel" inputmode="tel" placeholder="e.g. 09 123 456 789">
                         @error('phone')
                             <span class="field-error">{{ $message }}</span>
                         @enderror

@@ -22,7 +22,7 @@
                 'label' => 'Projects',
                 'value' => $totalProjectCount,
                 'note' => 'Total project records',
-                'symbol' => 'PR',
+                'symbol' => 'P',
             ],
             [
                 'permission' => 'customers.view',
@@ -30,7 +30,7 @@
                 'label' => 'Customers',
                 'value' => $customerCount,
                 'note' => 'Customer accounts',
-                'symbol' => 'CU',
+                'symbol' => 'C',
             ],
             [
                 'permission' => 'suppliers.view',
@@ -38,7 +38,7 @@
                 'label' => 'Suppliers',
                 'value' => $supplierCount,
                 'note' => 'Supplier partners',
-                'symbol' => 'SU',
+                'symbol' => 'S',
             ],
             [
                 'permission' => 'users.view',
@@ -46,86 +46,42 @@
                 'label' => 'Active users',
                 'value' => $activeUserCount,
                 'note' => number_format($roleCount) . ' ' . ($roleCount === 1 ? 'role' : 'roles'),
-                'symbol' => 'US',
+                'symbol' => 'U',
             ],
         ];
 
         $performanceCards = [
-            [
-                'label' => 'In progress',
-                'value' => number_format($inProgressProjectCount),
-                'note' => 'Current project pipeline',
-                'class' => 'metric-progress',
-            ],
-            [
-                'label' => 'Won',
-                'value' => number_format($wonProjectCount),
-                'note' => 'Completed or paid',
-                'class' => 'metric-positive',
-            ],
-            [
-                'label' => 'Lost',
-                'value' => number_format($lostProjectCount),
-                'note' => 'Lost or cancelled',
-                'class' => 'metric-negative',
-            ],
-            [
-                'label' => 'Revenue',
-                'value' => number_format($totalProjectRevenue, 2),
-                'note' => 'MMK',
-                'class' => 'metric-financial',
-            ],
-            [
-                'label' => 'Cost',
-                'value' => number_format($totalProjectCost, 2),
-                'note' => 'MMK',
-                'class' => 'metric-financial',
-            ],
+            ['label' => 'In progress', 'value' => number_format($inProgressProjectCount), 'note' => 'Current pipeline'],
+            ['label' => 'Won', 'value' => number_format($wonProjectCount), 'note' => 'Completed or paid'],
+            ['label' => 'Lost', 'value' => number_format($lostProjectCount), 'note' => 'Lost or cancelled'],
+            ['label' => 'Revenue', 'value' => number_format($totalProjectRevenue, 2), 'note' => 'MMK'],
+            ['label' => 'Cost', 'value' => number_format($totalProjectCost, 2), 'note' => 'MMK'],
             [
                 'label' => 'Gross profit',
                 'value' => number_format($totalGrossProfit, 2),
                 'note' => 'MMK',
-                'class' => $totalGrossProfit < 0 ? 'metric-negative' : 'metric-positive',
+                'negative' => $totalGrossProfit < 0,
             ],
             [
                 'label' => 'GP margin',
                 'value' => number_format($totalGrossProfitPercent, 2) . '%',
                 'note' => 'Gross profit ratio',
-                'class' => $totalGrossProfitPercent < 0 ? 'metric-negative' : 'metric-positive',
+                'negative' => $totalGrossProfitPercent < 0,
             ],
         ];
-
-        $statusTotal = max(1, (int) collect($projectStatusCounts)->sum('count'));
     @endphp
 
     <section class="content dashboard-page">
         <header class="dashboard-hero">
-            <div class="dashboard-hero-content">
-                <div class="dashboard-hero-copy">
-                    <span class="dashboard-kicker">Workspace overview</span>
-                    <h1>{{ $greeting }}, {{ $currentUser->name }}.</h1>
-                    <p>Monitor project activity, commercial performance, and recent records from one workspace.</p>
-                </div>
-
-                <div class="dashboard-date-card" aria-label="Current date">
-                    <span>{{ $currentTime->format('l') }}</span>
-                    <strong>{{ $currentTime->format('d M Y') }}</strong>
-                </div>
+            <div class="dashboard-hero-copy">
+                <span class="dashboard-kicker">Workspace overview</span>
+                <h1>{{ $greeting }}, {{ $currentUser->name }}.</h1>
+                <p>Monitor project activity, commercial performance, and recently added records from one place.</p>
             </div>
 
-            <div class="dashboard-hero-summary">
-                <div>
-                    <span>Projects</span>
-                    <strong>{{ number_format($totalProjectCount) }}</strong>
-                </div>
-                <div>
-                    <span>Revenue</span>
-                    <strong>{{ number_format($totalProjectRevenue, 0) }} MMK</strong>
-                </div>
-                <div>
-                    <span>GP margin</span>
-                    <strong>{{ number_format($totalGrossProfitPercent, 2) }}%</strong>
-                </div>
+            <div class="dashboard-date" aria-label="Current date">
+                <span>{{ $currentTime->format('l') }}</span>
+                <strong>{{ $currentTime->format('d M Y') }}</strong>
             </div>
         </header>
 
@@ -134,14 +90,16 @@
                 @if ($currentUser->hasPermission($card['permission']))
                     <a class="dashboard-overview-card" href="{{ $card['route'] }}">
                     @else
-                        <div class="dashboard-overview-card is-static">
+                        <div class="dashboard-overview-card dashboard-card-static">
                 @endif
-                <div class="dashboard-overview-head">
-                    <span class="dashboard-overview-label">{{ $card['label'] }}</span>
+
+                <div class="dashboard-overview-top">
+                    <span>{{ $card['label'] }}</span>
                     <span class="dashboard-overview-symbol" aria-hidden="true">{{ $card['symbol'] }}</span>
                 </div>
                 <strong class="dashboard-overview-value">{{ number_format($card['value']) }}</strong>
-                <span class="dashboard-overview-note">{{ $card['note'] }}</span>
+                <small>{{ $card['note'] }}</small>
+
                 @if ($currentUser->hasPermission($card['permission']))
                     </a>
                 @else
@@ -152,316 +110,249 @@
 
         @if ($currentUser->hasPermission('projects.view'))
             <section class="dashboard-panel dashboard-performance-panel">
-                <div class="dashboard-panel-heading">
+                <div class="dashboard-section-heading">
                     <div>
-                        <span class="dashboard-section-kicker">Project performance</span>
+                        <span class="dashboard-kicker">Project performance</span>
                         <h2>Commercial and progress overview</h2>
-                        <p>Combined project outcomes and financial totals.</p>
                     </div>
-                    <a href="{{ route('projectsPage') }}">View projects <span aria-hidden="true">→</span></a>
+                    <a href="{{ route('projectsPage') }}">View projects →</a>
                 </div>
 
                 <div class="dashboard-performance-grid">
-                    @foreach ($performanceCards as $metric)
-                        <article class="dashboard-performance-card {{ $metric['class'] }}">
-                            <span class="dashboard-performance-label">{{ $metric['label'] }}</span>
-                            <strong class="dashboard-performance-value">{{ $metric['value'] }}</strong>
-                            <span class="dashboard-performance-note">{{ $metric['note'] }}</span>
-                        </article>
+                    @foreach ($performanceCards as $card)
+                        <div class="dashboard-performance-card">
+                            <span>{{ $card['label'] }}</span>
+                            <strong
+                                class="{{ $card['negative'] ?? false ? 'is-negative' : '' }}">{{ $card['value'] }}</strong>
+                            <small>{{ $card['note'] }}</small>
+                        </div>
                     @endforeach
                 </div>
             </section>
         @endif
 
-        <div class="dashboard-main-grid">
+        <div class="dashboard-analytics-grid">
             <section class="dashboard-panel dashboard-chart-panel">
-                <div class="dashboard-panel-heading">
+                <div class="dashboard-section-heading">
                     <div>
-                        <span class="dashboard-section-kicker">Six-month trend</span>
+                        <span class="dashboard-kicker">Six-month trend</span>
                         <h2>Monthly project report</h2>
                         <p>Projects grouped by the Project Create Date entered in the form.</p>
                     </div>
-                    <div class="dashboard-chart-totals">
+                    <div class="dashboard-summary-pills">
                         <div><span>Total</span><strong>{{ number_format($sixMonthProjectTotal) }}</strong></div>
                         <div><span>Peak</span><strong>{{ number_format($highestMonthlyProjectCount) }}</strong></div>
                     </div>
                 </div>
 
-                <div class="dashboard-chart" role="img" aria-label="Monthly project report for six months">
+                <div class="dashboard-chart" role="img" aria-label="Monthly project totals for six months">
                     <div class="dashboard-chart-lines" aria-hidden="true">
-                        <span></span><span></span><span></span><span></span>
-                    </div>
-
-                    <div class="dashboard-chart-bars">
+                        <span></span><span></span><span></span><span></span></div>
+                    <div class="dashboard-bars">
                         @foreach ($monthlyProjectReport as $month)
                             @php
                                 $height =
                                     $month['count'] > 0
-                                        ? max(12, (int) round(($month['count'] / $monthlyProjectMaximum) * 100))
-                                        : 4;
+                                        ? max(10, (int) round(($month['count'] / $monthlyProjectMaximum) * 100))
+                                        : 3;
                             @endphp
-                            <div class="dashboard-chart-column">
-                                <span class="dashboard-chart-value">{{ number_format($month['count']) }}</span>
-                                <div class="dashboard-chart-track"
-                                    title="{{ $month['full_label'] }}: {{ $month['count'] }} projects">
-                                    <div class="dashboard-chart-fill {{ $month['count'] === 0 ? 'is-empty' : '' }}"
+                            <div class="dashboard-bar-column"
+                                title="{{ $month['full_label'] }}: {{ $month['count'] }} projects">
+                                <strong>{{ number_format($month['count']) }}</strong>
+                                <div class="dashboard-bar-track">
+                                    <div class="dashboard-bar-fill {{ $month['count'] === 0 ? 'is-empty' : '' }}"
                                         style="height: {{ $height }}%"></div>
                                 </div>
-                                <div class="dashboard-chart-label">
-                                    <strong>{{ $month['label'] }}</strong>
-                                    <span>{{ substr($month['key'], 0, 4) }}</span>
-                                </div>
+                                <div class="dashboard-bar-label">
+                                    <b>{{ $month['label'] }}</b><span>{{ substr($month['key'], 0, 4) }}</span></div>
                             </div>
                         @endforeach
                     </div>
                 </div>
             </section>
 
-            <aside class="dashboard-side-stack">
-                <section class="dashboard-panel dashboard-status-panel">
-                    <div class="dashboard-panel-heading compact">
-                        <div>
-                            <span class="dashboard-section-kicker">Pipeline</span>
-                            <h2>Progress status</h2>
-                        </div>
-                        <span class="dashboard-total-badge">{{ number_format($totalProjectCount) }}</span>
+            <aside class="dashboard-panel dashboard-status-panel">
+                <div class="dashboard-section-heading compact">
+                    <div>
+                        <span class="dashboard-kicker">Pipeline</span>
+                        <h2>Progress status</h2>
                     </div>
+                    <strong class="dashboard-count-badge">{{ number_format($totalProjectCount) }}</strong>
+                </div>
 
-                    <div class="dashboard-status-list">
-                        @forelse ($projectStatusCounts as $status)
-                            @php
-                                $statusPercent = min(100, max(0, ($status['count'] / $statusTotal) * 100));
-                            @endphp
-                            @if ($currentUser->hasPermission('projects.view'))
-                                <a class="dashboard-status-row"
-                                    href="{{ route('projectsPage', ['status' => $status['name']]) }}">
-                                @else
-                                    <div class="dashboard-status-row">
-                            @endif
-                            <div class="dashboard-status-head">
-                                <span>{{ $status['name'] }}</span>
-                                <strong>{{ number_format($status['count']) }}</strong>
-                            </div>
-                            <div class="dashboard-status-track" aria-hidden="true">
-                                <span style="width: {{ $statusPercent }}%"></span>
-                            </div>
-                            @if ($currentUser->hasPermission('projects.view'))
-                                </a>
-                            @else
-                    </div>
-                    @endif
+                @forelse ($projectStatusCounts as $status)
+                    @php
+                        $statusPercent =
+                            $totalProjectCount > 0
+                                ? max(4, min(100, ($status['count'] / $totalProjectCount) * 100))
+                                : 0;
+                    @endphp
+                    <a class="dashboard-status-row" href="{{ route('projectsPage', ['status' => $status['name']]) }}">
+                        <div><span>{{ $status['name'] }}</span><strong>{{ number_format($status['count']) }}</strong>
+                        </div>
+                        <div class="dashboard-status-track"><span style="width: {{ $statusPercent }}%"></span></div>
+                    </a>
                 @empty
                     <p class="dashboard-empty">No project status records found.</p>
-                    @endforelse
-        </div>
-    </section>
-
-    <section class="dashboard-panel dashboard-quick-panel">
-        <div class="dashboard-panel-heading compact">
-            <div>
-                <span class="dashboard-section-kicker">Quick access</span>
-                <h2>Common actions</h2>
-            </div>
-        </div>
-        <div class="dashboard-quick-actions">
-            @if ($currentUser->hasPermission('projects.create'))
-                <a href="{{ route('project-create') }}">Create project <span>→</span></a>
-            @endif
-            @if ($currentUser->hasPermission('customers.create'))
-                <a href="{{ route('customers.create') }}">Add customer <span>→</span></a>
-            @endif
-            @if ($currentUser->hasPermission('suppliers.create'))
-                <a href="{{ route('suppliers.create') }}">Add supplier <span>→</span></a>
-            @endif
-            @if ($currentUser->hasPermission('users.create'))
-                <a href="{{ route('users.create') }}">Create user <span>→</span></a>
-            @endif
-        </div>
-    </section>
-    </aside>
-    </div>
-
-    <section class="dashboard-panel dashboard-directory-panel">
-        <div class="dashboard-panel-heading">
-            <div>
-                <span class="dashboard-section-kicker">Directory activity</span>
-                <h2>Recently added records</h2>
-                <p>The latest customer and supplier records in the workspace.</p>
-            </div>
+                @endforelse
+            </aside>
         </div>
 
-        <div class="dashboard-directory-grid">
-            <div class="dashboard-directory-block">
-                <div class="dashboard-directory-title">
-                    <strong>Customers</strong>
-                    @if ($currentUser->hasPermission('customers.view'))
-                        <a href="{{ route('customersPage') }}">View all</a>
-                    @endif
+        <section class="dashboard-panel dashboard-directory-panel">
+            <div class="dashboard-section-heading">
+                <div>
+                    <span class="dashboard-kicker">Directory activity</span>
+                    <h2>Recently added records</h2>
+                    <p>The latest customer and supplier records in the workspace.</p>
                 </div>
-                <div class="dashboard-directory-list">
-                    @forelse ($recentCustomers as $customer)
-                        <div class="dashboard-directory-item">
-                            <span class="dashboard-avatar">{{ strtoupper(mb_substr($customer->name, 0, 1)) }}</span>
-                            <div>
-                                <strong>{{ $customer->name }}</strong>
-                                <span>{{ $customer->contact_person ?: 'No primary contact' }}</span>
+            </div>
+
+            <div class="dashboard-directory-grid">
+                <div class="dashboard-directory-group">
+                    <div class="dashboard-directory-heading">
+                        <strong>Customers</strong>
+                        @if ($currentUser->hasPermission('customers.view'))
+                            <a href="{{ route('customersPage') }}">View all</a>
+                        @endif
+                    </div>
+
+                    <div class="dashboard-record-list">
+                        @forelse ($recentCustomers as $customer)
+                            @php
+                                $customerSecondary = null;
+                                if (
+                                    filled($customer->contact_person) &&
+                                    strcasecmp(
+                                        trim((string) $customer->contact_person),
+                                        trim((string) $customer->name),
+                                    ) !== 0
+                                ) {
+                                    $customerSecondary = 'Contact: ' . $customer->contact_person;
+                                } elseif (filled($customer->phone)) {
+                                    $customerSecondary = $customer->phone;
+                                } elseif (filled($customer->email)) {
+                                    $customerSecondary = $customer->email;
+                                }
+                            @endphp
+                            <div class="dashboard-record-item">
+                                <span class="dashboard-record-avatar"
+                                    aria-hidden="true">{{ strtoupper(mb_substr($customer->name, 0, 1)) }}</span>
+                                <div class="dashboard-record-content">
+                                    <strong title="{{ $customer->name }}">{{ $customer->name }}</strong>
+                                    <span>{{ $customerSecondary ?: 'No contact information' }}</span>
+                                </div>
                             </div>
-                        </div>
-                    @empty
-                        <p class="dashboard-empty">No customer records found.</p>
-                    @endforelse
+                        @empty
+                            <p class="dashboard-empty">No customer records found.</p>
+                        @endforelse
+                    </div>
                 </div>
-            </div>
 
-            <div class="dashboard-directory-block">
-                <div class="dashboard-directory-title">
-                    <strong>Suppliers</strong>
-                    @if ($currentUser->hasPermission('suppliers.view'))
-                        <a href="{{ route('suppliersPage') }}">View all</a>
-                    @endif
-                </div>
-                <div class="dashboard-directory-list">
-                    @forelse ($recentSuppliers as $supplier)
-                        <div class="dashboard-directory-item">
-                            <span class="dashboard-avatar">{{ strtoupper(mb_substr($supplier->name, 0, 1)) }}</span>
-                            <div>
-                                <strong>{{ $supplier->name }}</strong>
-                                <span>{{ $supplier->category ?: 'No category' }}</span>
+                <div class="dashboard-directory-group">
+                    <div class="dashboard-directory-heading">
+                        <strong>Suppliers</strong>
+                        @if ($currentUser->hasPermission('suppliers.view'))
+                            <a href="{{ route('suppliersPage') }}">View all</a>
+                        @endif
+                    </div>
+
+                    <div class="dashboard-record-list">
+                        @forelse ($recentSuppliers as $supplier)
+                            @php
+                                $supplierSecondary = filled($supplier->category)
+                                    ? $supplier->category
+                                    : (filled($supplier->phone)
+                                        ? $supplier->phone
+                                        : (filled($supplier->email)
+                                            ? $supplier->email
+                                            : 'No supplier details'));
+                            @endphp
+                            <div class="dashboard-record-item">
+                                <span class="dashboard-record-avatar"
+                                    aria-hidden="true">{{ strtoupper(mb_substr($supplier->name, 0, 1)) }}</span>
+                                <div class="dashboard-record-content">
+                                    <strong title="{{ $supplier->name }}">{{ $supplier->name }}</strong>
+                                    <span>{{ $supplierSecondary }}</span>
+                                </div>
                             </div>
-                        </div>
-                    @empty
-                        <p class="dashboard-empty">No supplier records found.</p>
-                    @endforelse
+                        @empty
+                            <p class="dashboard-empty">No supplier records found.</p>
+                        @endforelse
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
     </section>
 @endsection
 
 @push('styles')
     <style>
         .dashboard-page {
-            --dash-surface: #fff;
-            --dash-soft: #f6f9f7;
-            --dash-border: #dfe7e2;
-            --dash-ink: #163f34;
-            --dash-muted: #708078;
-            --dash-accent: #226b57;
-            --dash-accent-soft: #e9f3ee;
             min-width: 0
         }
 
         .dashboard-hero {
-            position: relative;
-            margin-bottom: 18px;
-            padding: 28px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, .12);
-            border-radius: 20px;
-            background: linear-gradient(125deg, #123f34 0%, #17604e 55%, #2c826b 100%);
-            box-shadow: 0 18px 44px rgba(20, 67, 54, .18);
-            color: #fff
-        }
-
-        .dashboard-hero::after {
-            position: absolute;
-            right: -80px;
-            bottom: -145px;
-            width: 330px;
-            height: 330px;
-            border: 48px solid rgba(255, 255, 255, .055);
-            border-radius: 50%;
-            content: ""
-        }
-
-        .dashboard-hero-content {
-            position: relative;
-            z-index: 1;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 24px
+            gap: 24px;
+            margin-bottom: 18px;
+            padding: 28px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #123f35, #247b65);
+            color: #fff;
+            box-shadow: 0 18px 42px rgba(18, 63, 53, .16)
         }
 
-        .dashboard-kicker,
-        .dashboard-section-kicker {
+        .dashboard-hero-copy {
+            min-width: 0
+        }
+
+        .dashboard-kicker {
             display: block;
             margin-bottom: 7px;
+            color: var(--green2);
             font-size: 8px;
             font-weight: 900;
             letter-spacing: .14em;
             text-transform: uppercase
         }
 
-        .dashboard-kicker {
-            color: #cde5dc
+        .dashboard-hero .dashboard-kicker {
+            color: #c9e3d7
         }
 
         .dashboard-hero h1 {
             margin: 0;
-            font-size: clamp(25px, 3vw, 39px);
-            line-height: 1.12
+            font-size: 30px;
+            line-height: 1.2
         }
 
-        .dashboard-hero-copy p {
-            max-width: 720px;
-            margin: 9px 0 0;
-            color: #d7e9e3;
-            font-size: 11px;
-            line-height: 1.6
+        .dashboard-hero p {
+            margin: 8px 0 0;
+            color: #d7e8e2;
+            font-size: 11px
         }
 
-        .dashboard-date-card {
+        .dashboard-date {
             display: grid;
-            flex: 0 0 132px;
-            padding: 13px;
+            flex: 0 0 118px;
+            min-height: 68px;
+            padding: 12px;
             border: 1px solid rgba(255, 255, 255, .18);
-            border-radius: 13px;
+            border-radius: 12px;
             background: rgba(255, 255, 255, .09);
-            backdrop-filter: blur(8px);
-            text-align: right
+            text-align: center;
+            place-content: center
         }
 
-        .dashboard-date-card span {
-            color: #cfe5de;
-            font-size: 9px
-        }
-
-        .dashboard-date-card strong {
-            margin-top: 3px;
-            font-size: 12px
-        }
-
-        .dashboard-hero-summary {
-            position: relative;
-            z-index: 1;
-            display: none;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 8px;
-            margin-top: 20px
-        }
-
-        .dashboard-hero-summary>div {
-            padding: 11px;
-            border: 1px solid rgba(255, 255, 255, .14);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, .07)
-        }
-
-        .dashboard-hero-summary span,
-        .dashboard-hero-summary strong {
-            display: block
-        }
-
-        .dashboard-hero-summary span {
-            color: #cfe5de;
+        .dashboard-date span {
             font-size: 8px
         }
 
-        .dashboard-hero-summary strong {
+        .dashboard-date strong {
             margin-top: 4px;
-            font-size: 12px
+            font-size: 11px
         }
 
         .dashboard-overview-grid {
@@ -473,20 +364,19 @@
 
         .dashboard-overview-card,
         .dashboard-performance-card {
-            position: relative;
-            min-width: 0;
-            border: 1px solid var(--dash-border);
-            background: var(--dash-surface);
-            box-shadow: 0 10px 26px rgba(25, 61, 50, .065)
+            border: 1px solid var(--line);
+            background: var(--white);
+            box-shadow: 0 10px 28px rgba(21, 54, 43, .055)
         }
 
         .dashboard-overview-card {
             display: block;
+            min-width: 0;
             padding: 17px;
-            border-radius: 15px;
+            border-radius: 14px;
             color: inherit;
             text-decoration: none;
-            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease
+            transition: .18s
         }
 
         .dashboard-overview-card::before,
@@ -495,99 +385,87 @@
             content: none !important
         }
 
-        .dashboard-overview-card:not(.is-static):hover {
-            border-color: #bdd1c7;
-            transform: translateY(-3px);
-            box-shadow: 0 16px 32px rgba(25, 61, 50, .11)
+        a.dashboard-overview-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 34px rgba(21, 54, 43, .1)
         }
 
-        .dashboard-overview-head {
+        .dashboard-overview-top {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px
-        }
-
-        .dashboard-overview-label {
-            color: var(--dash-muted);
+            gap: 10px;
+            color: var(--muted);
             font-size: 9px;
-            font-weight: 850;
-            text-transform: uppercase
+            font-weight: 800
         }
 
         .dashboard-overview-symbol {
             display: grid;
-            flex: 0 0 32px;
             width: 32px;
             height: 32px;
             border-radius: 10px;
-            background: var(--dash-accent-soft);
-            color: var(--dash-accent);
-            font-size: 8px;
+            background: #edf4f0;
+            color: var(--green);
+            font-size: 10px;
             font-weight: 900;
             place-items: center
         }
 
         .dashboard-overview-value {
             display: block;
-            margin: 17px 0 7px;
-            color: var(--dash-ink);
-            font-size: 28px;
-            line-height: 1
+            margin: 15px 0 7px;
+            color: var(--green);
+            font-size: 25px
         }
 
-        .dashboard-overview-note {
-            display: block;
-            color: var(--dash-muted);
-            font-size: 9px
+        .dashboard-overview-card small {
+            color: var(--muted);
+            font-size: 8px
         }
 
         .dashboard-panel {
             min-width: 0;
-            padding: 20px;
-            border: 1px solid var(--dash-border);
-            border-radius: 17px;
-            background: var(--dash-surface);
-            box-shadow: 0 10px 30px rgba(25, 61, 50, .055)
+            padding: 19px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: var(--white);
+            box-shadow: 0 12px 34px rgba(21, 54, 43, .055)
         }
 
         .dashboard-performance-panel {
             margin-bottom: 18px
         }
 
-        .dashboard-panel-heading {
+        .dashboard-section-heading {
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
             gap: 16px;
-            margin-bottom: 17px
+            margin-bottom: 15px
         }
 
-        .dashboard-panel-heading.compact {
-            margin-bottom: 14px
+        .dashboard-section-heading.compact {
+            align-items: center
         }
 
-        .dashboard-section-kicker {
-            color: var(--dash-accent)
-        }
-
-        .dashboard-panel-heading h2 {
+        .dashboard-section-heading h2 {
             margin: 0;
-            color: var(--dash-ink);
-            font-size: 17px
+            color: var(--ink);
+            font-size: 16px
         }
 
-        .dashboard-panel-heading p {
+        .dashboard-section-heading p {
             margin: 5px 0 0;
-            color: var(--dash-muted);
-            font-size: 9px;
-            line-height: 1.5
+            color: var(--muted);
+            font-size: 9px
         }
 
-        .dashboard-panel-heading>a {
-            color: var(--dash-accent);
+        .dashboard-section-heading>a,
+        .dashboard-directory-heading>a {
+            color: var(--green2);
             font-size: 9px;
-            font-weight: 850;
+            font-weight: 800;
             text-decoration: none
         }
 
@@ -599,97 +477,92 @@
 
         .dashboard-performance-card {
             display: flex;
-            flex-direction: column;
-            min-height: 106px;
-            padding: 14px;
-            border-radius: 12px
+            min-width: 0;
+            min-height: 104px;
+            padding: 13px;
+            border-radius: 11px;
+            flex-direction: column
         }
 
-        .dashboard-performance-label {
-            color: var(--dash-muted);
+        .dashboard-performance-card>span {
+            color: var(--muted);
             font-size: 8px;
-            font-weight: 900;
+            font-weight: 850;
             text-transform: uppercase
         }
 
-        .dashboard-performance-value {
+        .dashboard-performance-card>strong {
             display: block;
-            margin: 15px 0 8px;
+            margin: 14px 0 7px;
+            color: var(--green);
+            font-size: 18px;
             overflow: hidden;
-            color: var(--dash-ink);
-            font-size: 19px;
-            line-height: 1.05;
             text-overflow: ellipsis
         }
 
-        .dashboard-performance-note {
+        .dashboard-performance-card>strong.is-negative {
+            color: #a53d3a
+        }
+
+        .dashboard-performance-card>small {
             margin-top: auto;
-            color: var(--dash-muted);
-            font-size: 8px
+            color: var(--muted);
+            font-size: 7px
         }
 
-        .metric-negative .dashboard-performance-value {
-            color: #a1423d
-        }
-
-        .metric-positive .dashboard-performance-value {
-            color: #1e684e
-        }
-
-        .dashboard-main-grid {
+        .dashboard-analytics-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1.7fr) minmax(280px, .8fr);
+            grid-template-columns: minmax(0, 1.8fr) minmax(280px, .72fr);
             align-items: start;
             gap: 18px;
             margin-bottom: 18px
         }
 
-        .dashboard-chart-totals {
+        .dashboard-summary-pills {
             display: flex;
-            gap: 8px
+            gap: 7px
         }
 
-        .dashboard-chart-totals>div {
-            min-width: 70px;
-            padding: 9px 11px;
-            border: 1px solid var(--dash-border);
+        .dashboard-summary-pills>div {
+            min-width: 68px;
+            padding: 9px;
+            border: 1px solid var(--line);
             border-radius: 10px;
-            background: var(--dash-soft);
+            background: #f8faf9;
             text-align: center
         }
 
-        .dashboard-chart-totals span,
-        .dashboard-chart-totals strong {
+        .dashboard-summary-pills span,
+        .dashboard-summary-pills strong {
             display: block
         }
 
-        .dashboard-chart-totals span {
-            color: var(--dash-muted);
+        .dashboard-summary-pills span {
+            color: var(--muted);
             font-size: 7px;
             font-weight: 850;
             text-transform: uppercase
         }
 
-        .dashboard-chart-totals strong {
-            margin-top: 3px;
-            color: var(--dash-ink);
-            font-size: 14px
+        .dashboard-summary-pills strong {
+            margin-top: 4px;
+            color: var(--green);
+            font-size: 13px
         }
 
         .dashboard-chart {
             position: relative;
-            min-height: 315px;
-            padding: 20px 12px 0;
-            overflow: hidden;
-            border: 1px solid var(--dash-border);
-            border-radius: 14px;
-            background: linear-gradient(180deg, #fbfdfc, #f4f8f5)
+            height: 270px;
+            padding: 17px 10px 0;
+            overflow-x: auto;
+            border: 1px solid var(--line);
+            border-radius: 13px;
+            background: linear-gradient(180deg, #fbfdfc, #f7faf8)
         }
 
         .dashboard-chart-lines {
             position: absolute;
-            z-index: 0;
-            inset: 23px 12px 55px;
+            inset: 25px 12px 50px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -700,252 +573,213 @@
             border-top: 1px dashed #dce6e0
         }
 
-        .dashboard-chart-bars {
+        .dashboard-bars {
             position: relative;
             z-index: 1;
             display: grid;
-            grid-template-columns: repeat(6, minmax(52px, 1fr));
+            grid-template-columns: repeat(6, minmax(55px, 1fr));
             align-items: end;
-            gap: clamp(8px, 2vw, 20px);
-            min-width: 440px;
-            height: 286px
+            gap: 18px;
+            min-width: 480px;
+            height: 245px
         }
 
-        .dashboard-chart-column {
+        .dashboard-bar-column {
             display: grid;
-            grid-template-rows: 25px minmax(175px, 1fr) 45px;
+            grid-template-rows: 25px minmax(155px, 1fr) 42px;
             align-items: end;
-            height: 100%
-        }
-
-        .dashboard-chart-value {
-            padding-bottom: 5px;
-            color: var(--dash-ink);
-            font-size: 9px;
-            font-weight: 900;
+            height: 100%;
             text-align: center
         }
 
-        .dashboard-chart-track {
-            position: relative;
-            width: min(52px, 72%);
-            height: 100%;
-            margin: auto;
-            overflow: hidden;
-            border-radius: 11px 11px 5px 5px;
-            background: #e8eeea
+        .dashboard-bar-column>strong {
+            padding-bottom: 5px;
+            color: var(--green);
+            font-size: 9px
         }
 
-        .dashboard-chart-fill {
+        .dashboard-bar-track {
+            position: relative;
+            width: min(50px, 72%);
+            height: 100%;
+            margin: auto;
+            border-radius: 10px 10px 4px 4px;
+            background: #edf2ef;
+            overflow: hidden
+        }
+
+        .dashboard-bar-fill {
             position: absolute;
             right: 0;
             bottom: 0;
             left: 0;
             min-height: 5px;
-            border-radius: 11px 11px 5px 5px;
-            background: linear-gradient(180deg, #5cae90, #226b57)
+            border-radius: 10px 10px 4px 4px;
+            background: #4aa184
         }
 
-        .dashboard-chart-fill.is-empty {
-            background: #d5dfda
+        .dashboard-bar-fill.is-empty {
+            background: #d6dfda
         }
 
-        .dashboard-chart-label {
-            padding-top: 8px;
-            text-align: center
-        }
-
-        .dashboard-chart-label strong,
-        .dashboard-chart-label span {
+        .dashboard-bar-label b,
+        .dashboard-bar-label span {
             display: block
         }
 
-        .dashboard-chart-label strong {
+        .dashboard-bar-label b {
             font-size: 9px
         }
 
-        .dashboard-chart-label span {
+        .dashboard-bar-label span {
             margin-top: 2px;
-            color: var(--dash-muted);
-            font-size: 8px
+            color: var(--muted);
+            font-size: 7px
         }
 
-        .dashboard-side-stack {
-            display: grid;
-            gap: 18px
-        }
-
-        .dashboard-total-badge {
+        .dashboard-count-badge {
             display: grid;
             min-width: 38px;
-            height: 30px;
+            height: 34px;
             padding: 0 10px;
             border-radius: 9px;
-            background: var(--dash-accent-soft);
-            color: var(--dash-accent);
+            background: #eaf3ee;
+            color: var(--green);
             font-size: 11px;
-            font-weight: 900;
             place-items: center
-        }
-
-        .dashboard-status-list {
-            display: grid;
-            gap: 13px
         }
 
         .dashboard-status-row {
             display: block;
+            padding: 9px 0;
             color: inherit;
             text-decoration: none
         }
 
-        .dashboard-status-head {
+        .dashboard-status-row>div:first-child {
             display: flex;
             justify-content: space-between;
             gap: 10px;
-            margin-bottom: 6px
+            margin-bottom: 6px;
+            font-size: 9px
         }
 
-        .dashboard-status-head span {
-            font-size: 9px;
+        .dashboard-status-row>div:first-child span {
             font-weight: 750
         }
 
-        .dashboard-status-head strong {
-            font-size: 9px
+        .dashboard-status-row>div:first-child strong {
+            color: var(--muted)
         }
 
         .dashboard-status-track {
             height: 5px;
-            overflow: hidden;
             border-radius: 999px;
-            background: #e7ede9
+            background: #edf2ef;
+            overflow: hidden
         }
 
         .dashboard-status-track span {
             display: block;
             height: 100%;
             border-radius: inherit;
-            background: linear-gradient(90deg, #2d7a62, #6bb497)
+            background: #5ca88e
         }
 
-        .dashboard-quick-actions {
-            display: grid;
-            gap: 8px
-        }
-
-        .dashboard-quick-actions a {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 11px 12px;
-            border: 1px solid var(--dash-border);
-            border-radius: 10px;
-            background: var(--dash-soft);
-            color: var(--dash-ink);
-            font-size: 9px;
-            font-weight: 800;
-            text-decoration: none;
-            transition: .16s
-        }
-
-        .dashboard-quick-actions a:hover {
-            border-color: #bbd0c5;
-            background: #eef5f1;
-            transform: translateX(2px)
-        }
-
-        .dashboard-quick-actions a span {
-            color: var(--dash-accent)
+        .dashboard-directory-panel {
+            margin-bottom: 18px
         }
 
         .dashboard-directory-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 18px
+            gap: 16px
         }
 
-        .dashboard-directory-block {
+        .dashboard-directory-group {
+            min-width: 0;
             padding: 15px;
-            border: 1px solid var(--dash-border);
+            border: 1px solid var(--line);
             border-radius: 13px;
-            background: var(--dash-soft)
+            background: #f8faf9
         }
 
-        .dashboard-directory-title {
+        .dashboard-directory-heading {
             display: flex;
+            align-items: center;
             justify-content: space-between;
             gap: 12px;
-            margin-bottom: 8px
+            margin-bottom: 11px
         }
 
-        .dashboard-directory-title strong {
+        .dashboard-directory-heading>strong {
             font-size: 10px
         }
 
-        .dashboard-directory-title a {
-            color: var(--dash-accent);
-            font-size: 9px;
-            font-weight: 800
-        }
-
-        .dashboard-directory-list {
+        .dashboard-record-list {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 8px
+            gap: 9px
         }
 
-        .dashboard-directory-item {
+        .dashboard-record-item {
             display: flex;
             align-items: center;
-            gap: 9px;
+            gap: 10px;
             min-width: 0;
-            padding: 10px;
-            border: 1px solid #e4ebe7;
-            border-radius: 10px;
+            padding: 11px;
+            border: 1px solid #e1e8e4;
+            border-radius: 11px;
             background: #fff
         }
 
-        .dashboard-avatar {
+        .dashboard-record-avatar {
             display: grid;
-            flex: 0 0 34px;
-            width: 34px;
-            height: 34px;
+            flex: 0 0 36px;
+            width: 36px;
+            height: 36px;
             border-radius: 10px;
-            background: var(--dash-accent-soft);
-            color: var(--dash-accent);
+            background: #e6f2ec;
+            color: var(--green);
             font-size: 10px;
             font-weight: 900;
             place-items: center
         }
 
-        .dashboard-directory-item>div {
+        .dashboard-record-content {
+            flex: 1;
             min-width: 0
         }
 
-        .dashboard-directory-item strong,
-        .dashboard-directory-item span {
+        .dashboard-record-content strong,
+        .dashboard-record-content span {
             display: block;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap
         }
 
-        .dashboard-directory-item strong {
+        .dashboard-record-content strong {
+            color: var(--ink);
             font-size: 9px
         }
 
-        .dashboard-directory-item>div span {
+        .dashboard-record-content span {
             margin-top: 3px;
-            color: var(--dash-muted);
+            color: var(--muted);
             font-size: 8px
         }
 
         .dashboard-empty {
             margin: 0;
-            color: var(--dash-muted);
-            font-size: 9px
+            padding: 14px;
+            color: var(--muted);
+            font-size: 9px;
+            text-align: center
+        }
+
+        .dashboard-card-static {
+            cursor: default
         }
 
         @media(max-width:1200px) {
@@ -953,93 +787,72 @@
                 grid-template-columns: repeat(4, minmax(0, 1fr))
             }
 
-            .dashboard-directory-list {
-                grid-template-columns: 1fr
+            .dashboard-record-list {
+                grid-template-columns: repeat(2, minmax(0, 1fr))
             }
         }
 
-        @media(max-width:1050px) {
+        @media(max-width:1000px) {
             .dashboard-overview-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr))
             }
 
-            .dashboard-main-grid {
+            .dashboard-analytics-grid {
                 grid-template-columns: 1fr
             }
 
-            .dashboard-directory-list {
-                grid-template-columns: repeat(3, minmax(0, 1fr))
+            .dashboard-directory-grid {
+                grid-template-columns: 1fr
             }
         }
 
-        @media(max-width:760px) {
+        @media(max-width:700px) {
             .dashboard-page {
                 padding-right: 14px;
                 padding-left: 14px
             }
 
             .dashboard-hero {
-                padding: 21px
-            }
-
-            .dashboard-hero-content {
                 align-items: flex-start;
+                padding: 21px;
                 flex-direction: column
             }
 
-            .dashboard-date-card {
+            .dashboard-hero h1 {
+                font-size: 23px
+            }
+
+            .dashboard-date {
                 width: 100%;
-                text-align: left
+                grid-auto-flow: column;
+                justify-content: space-between;
+                min-height: auto
             }
 
-            .dashboard-hero-summary {
-                display: grid
-            }
-
-            .dashboard-performance-grid {
+            .dashboard-performance-grid,
+            .dashboard-record-list {
                 grid-template-columns: repeat(2, minmax(0, 1fr))
             }
 
-            .dashboard-directory-grid {
-                grid-template-columns: 1fr
-            }
-
-            .dashboard-directory-list {
-                grid-template-columns: 1fr
-            }
-
-            .dashboard-chart-panel {
-                overflow: hidden
-            }
-
-            .dashboard-chart {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch
-            }
-        }
-
-        @media(max-width:500px) {
-
-            .dashboard-overview-grid,
-            .dashboard-performance-grid {
-                grid-template-columns: 1fr
-            }
-
-            .dashboard-hero-summary {
-                grid-template-columns: 1fr
-            }
-
-            .dashboard-panel-heading {
-                align-items: stretch;
+            .dashboard-section-heading {
                 flex-direction: column
             }
 
-            .dashboard-chart-totals {
+            .dashboard-summary-pills {
                 width: 100%
             }
 
-            .dashboard-chart-totals>div {
+            .dashboard-summary-pills>div {
                 flex: 1
+            }
+        }
+
+        @media(max-width:480px) {
+
+            .dashboard-overview-grid,
+            .dashboard-performance-grid,
+            .dashboard-record-list {
+                grid-template-columns: 1fr
             }
         }
     </style>

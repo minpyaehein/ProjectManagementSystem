@@ -291,7 +291,7 @@
                             required>
                         <input type="text" name="description" value="{{ old('description') }}"
                             placeholder="Cost description" maxlength="255" required>
-                        <input type="number" name="amount" value="{{ old('amount') }}" min="0.01" step="0.01"
+                        <input type="text" name="amount" value="{{ old('amount') }}" maxlength="15" step="0.01"
                             placeholder="Amount" required>
                         <button type="submit">Add Cost</button>
                         <button type="reset" class="financial-clear-button">Clear</button>
@@ -343,8 +343,8 @@
                                                     value="{{ $costItem->item_date?->format('Y-m-d') }}" required>
                                                 <input type="text" name="description"
                                                     value="{{ $costItem->description }}" maxlength="255" required>
-                                                <input type="number" name="amount" value="{{ $costItem->amount }}"
-                                                    min="0.01" step="0.01" required>
+                                                <input type="text" name="amount" value="{{ $costItem->amount }}"
+                                                    maxlength="15" step="0.01" required>
                                                 <button type="submit">Save</button>
                                             </form>
                                         @else
@@ -380,7 +380,7 @@
                             required>
                         <input type="text" name="description" value="{{ old('description') }}"
                             placeholder="Revenue description" maxlength="255" required>
-                        <input type="number" name="amount" value="{{ old('amount') }}" min="0.01" step="0.01"
+                        <input type="text" name="amount" value="{{ old('amount') }}" maxlength="15" step="0.01"
                             placeholder="Amount" required>
                         <button type="submit">Add Revenue</button>
                         <button type="reset" class="financial-clear-button">Clear</button>
@@ -433,8 +433,8 @@
                                                     value="{{ $revenueItem->item_date?->format('Y-m-d') }}" required>
                                                 <input type="text" name="description"
                                                     value="{{ $revenueItem->description }}" maxlength="255" required>
-                                                <input type="number" name="amount" value="{{ $revenueItem->amount }}"
-                                                    min="0.01" step="0.01" required>
+                                                <input type="text" name="amount" value="{{ $revenueItem->amount }}"
+                                                    maxlength="15" step="0.01" required>
                                                 <button type="submit">Save</button>
                                             </form>
                                         @else

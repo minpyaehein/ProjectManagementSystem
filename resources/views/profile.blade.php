@@ -121,7 +121,7 @@
                             <div class="field">
                                 <label for="profile_phone">Phone number</label>
                                 <input id="profile_phone" name="phone" type="tel"
-                                    value="{{ old('phone', $user->phone) }}" maxlength="30" autocomplete="tel"
+                                    value="{{ old('phone', $user->phone) }}" maxlength="15" autocomplete="tel"
                                     inputmode="tel" placeholder="e.g. 09 123 456 789">
                                 @error('phone', 'profileUpdate')
                                     <span class="field-error">{{ $message }}</span>
