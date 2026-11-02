@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
@@ -16,10 +17,22 @@ class HomeController extends Controller
     {
         $activeProjectCount = Project::query()
             ->where('is_active', true)
+            ->where(function (Builder $query): void {
+                $query
+                    ->whereNull('status')
+                    ->orWhereRaw("LOWER(TRIM(status)) <> ?", ['cancelled']);
+            })
             ->count();
 
         $inactiveProjectCount = Project::query()
-            ->where('is_active', false)
+            ->where(function (Builder $query): void {
+                $query
+                    ->where('is_active', false)
+                    ->orWhereRaw(
+                        "LOWER(TRIM(COALESCE(status, ''))) = ?",
+                        ['cancelled']
+                    );
+            })
             ->count();
 
         $totalProjectCount = Project::query()->count();
@@ -42,12 +55,6 @@ class HomeController extends Controller
             ->limit(3)
             ->get();
 
-        /*
-         * Build the six-month project report from the Project Create Date
-         * selected by the user. In this project, that column is `date`.
-         * The reporting window ends at the later of the current month or
-         * the latest project-date month, so future-dated projects can appear.
-         */
         $latestProjectDate = Project::query()
             ->whereNotNull('date')
             ->max('date');
@@ -71,8 +78,7 @@ class HomeController extends Controller
             ->whereDate('date', '<', $monthEnd->toDateString())
             ->get(['project_id', 'date'])
             ->countBy(
-                fn (Project $project): string =>
-                    $project->date->format('Y-m')
+                fn (Project $project): string => $project->date->format('Y-m')
             );
 
         $monthlyProjectReport = collect(range(0, 5))
@@ -91,20 +97,10 @@ class HomeController extends Controller
                 ];
             });
 
-        $highestMonthlyProjectCount = (int) $monthlyProjectReport
-            ->max('count');
-
-        // Keep this divisor at least 1 to prevent division by zero in Blade.
+        $highestMonthlyProjectCount = (int) $monthlyProjectReport->max('count');
         $monthlyProjectMaximum = max(1, $highestMonthlyProjectCount);
+        $sixMonthProjectTotal = (int) $monthlyProjectReport->sum('count');
 
-        $sixMonthProjectTotal = (int) $monthlyProjectReport
-            ->sum('count');
-
-        /*
-         * Actual project workflow statuses from the Project form.
-         * Examples: Proposal, Quotation, Negotiation, Delivery,
-         * Payment, Completed, Cancelled, or other stored values.
-         */
         $projectStatusCounts = Project::query()
             ->selectRaw(
                 "COALESCE(NULLIF(TRIM(status), ''), 'Not Set') AS status_label"
