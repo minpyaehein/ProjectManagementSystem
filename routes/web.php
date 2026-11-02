@@ -200,15 +200,22 @@ Route::middleware('auth')->group(function (): void {
 
 });
 
+Route::get('/', function () {
+    return auth()->check()
+        ? redirect()->route('homePage')
+        : redirect()->route('login');
+})->name('landing');
+
 Route::middleware('guest')->group(function (): void {
-    Route::get('/', [AuthController::class, 'showLogin'])
-        ->name('login');
+    Route::get(
+        '/login',
+        [AuthController::class, 'showLogin']
+    )->name('login');
 
-    Route::get('/login', [AuthController::class, 'showLogin'])
-        ->name('login');
-
-    Route::post('/login', [AuthController::class, 'login'])
-        ->name('login-form');
+    Route::post(
+        '/login',
+        [AuthController::class, 'login']
+    )->name('login-form');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])
