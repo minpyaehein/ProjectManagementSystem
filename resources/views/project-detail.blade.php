@@ -130,6 +130,20 @@
                         </strong>
                     </div>
 
+                    <div class="project-detail-item">
+                        <span>PO Date</span>
+                        <strong>
+                            {{ $project->po_date?->format('d M Y') ?? 'Not provided' }}
+                        </strong>
+                    </div>
+
+                    <div class="project-detail-item">
+                        <span>Invoice Date</span>
+                        <strong>
+                            {{ $project->invoice_date?->format('d M Y') ?? 'Not provided' }}
+                        </strong>
+                    </div>
+
                     <div class="project-detail-item project-detail-remark">
                         <span>Remark</span>
                         <strong>{{ $project->remark ?: '—' }}</strong>

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -8,24 +7,42 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
-    protected $table = 'project';
+    protected $table      = 'project';
     protected $primaryKey = 'project_id';
 
     protected $fillable = [
-        'name', 'customer_id', 'supplier_id', 'vendor', 'accountManagerName',
-        'productCategory', 'type', 'status', 'is_active', 'date', 'end_date',
-        'remark', 'cost', 'revenue', 'log_id', 'created_by', 'assigned_user_id',
+        'name',
+        'customer_id',
+        'supplier_id',
+        'vendor',
+        'accountManagerName',
+        'productCategory',
+        'type',
+        'status',
+        'is_active',
+        'date',
+        'end_date',
+        'po_date',
+        'invoice_date',
+        'remark',
+        'cost',
+        'revenue',
+        'log_id',
+        'created_by',
+        'assigned_user_id',
     ];
 
     protected function casts(): array
     {
         return [
-            'date' => 'date',
-            'end_date' => 'date',
-            'is_active' => 'boolean',
-            'cost' => 'decimal:2',
-            'revenue' => 'decimal:2',
-            'created_by' => 'integer',
+            'date'             => 'date',
+            'end_date'         => 'date',
+            'po_date'          => 'date',
+            'invoice_date'     => 'date',
+            'is_active'        => 'boolean',
+            'cost'             => 'decimal:2',
+            'revenue'          => 'decimal:2',
+            'created_by'       => 'integer',
             'assigned_user_id' => 'integer',
         ];
     }

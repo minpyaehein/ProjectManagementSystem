@@ -8,18 +8,12 @@
         $costItems = collect($project->costItems ?? []);
         $revenueItems = collect($project->revenueItems ?? []);
 
-        $activeCostTotal = (float) $costItems
-            ->where('is_active', true)
-            ->sum('amount');
+        $activeCostTotal = (float) $costItems->where('is_active', true)->sum('amount');
 
-        $activeRevenueTotal = (float) $revenueItems
-            ->where('is_active', true)
-            ->sum('amount');
+        $activeRevenueTotal = (float) $revenueItems->where('is_active', true)->sum('amount');
 
         $grossProfit = $activeRevenueTotal - $activeCostTotal;
-        $grossProfitPercent = $activeRevenueTotal > 0
-            ? ($grossProfit / $activeRevenueTotal) * 100
-            : 0;
+        $grossProfitPercent = $activeRevenueTotal > 0 ? ($grossProfit / $activeRevenueTotal) * 100 : 0;
 
         $canEditProject = auth()->user()->hasPermission('projects.edit');
     @endphp
@@ -34,11 +28,7 @@
                     <p>Keep customer, supplier, commercial, and schedule information up to date.</p>
                 </div>
 
-                <a
-                    href="{{ route('projectsPage') }}"
-                    class="project-entry-close"
-                    aria-label="Close and return to projects"
-                >
+                <a href="{{ route('projectsPage') }}" class="project-entry-close" aria-label="Close and return to projects">
                     &times;
                 </a>
             </div>
@@ -66,26 +56,16 @@
                 </div>
             @endif
 
-            <form
-                action="{{ route('projects.update', $project) }}"
-                method="POST"
-                class="project-entry-form"
-                enctype="multipart/form-data"
-            >
+            <form action="{{ route('projects.update', $project) }}" method="POST" class="project-entry-form"
+                enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
                 <div class="project-entry-grid">
                     <div class="project-entry-field project-entry-project">
                         <label for="name">Project</label>
-                        <input
-                            id="name"
-                            name="name"
-                            type="text"
-                            value="{{ old('name', $project->name) }}"
-                            maxlength="255"
-                            required
-                        >
+                        <input id="name" name="name" type="text" value="{{ old('name', $project->name) }}"
+                            maxlength="255" required>
                         @error('name')
                             <span class="field-error">{{ $message }}</span>
                         @enderror
@@ -96,13 +76,7 @@
                         <select id="customer_id" name="customer_id" required>
                             <option value="">-- Select End User --</option>
                             @foreach ($customers as $customer)
-                                <option
-                                    value="{{ $customer->customer_id }}"
-                                    @selected(
-                                        (string) old('customer_id', $project->customer_id)
-                                        === (string) $customer->customer_id
-                                    )
-                                >
+                                <option value="{{ $customer->customer_id }}" @selected((string) old('customer_id', $project->customer_id) === (string) $customer->customer_id)>
                                     {{ $customer->name }}
                                 </option>
                             @endforeach
@@ -117,13 +91,7 @@
                         <select id="supplier_id" name="supplier_id" required>
                             <option value="">-- Select Supplier --</option>
                             @foreach ($suppliers as $supplier)
-                                <option
-                                    value="{{ $supplier->supplier_id }}"
-                                    @selected(
-                                        (string) old('supplier_id', $project->supplier_id)
-                                        === (string) $supplier->supplier_id
-                                    )
-                                >
+                                <option value="{{ $supplier->supplier_id }}" @selected((string) old('supplier_id', $project->supplier_id) === (string) $supplier->supplier_id)>
                                     {{ $supplier->name }}
                                 </option>
                             @endforeach
@@ -135,14 +103,8 @@
 
                     <div class="project-entry-field">
                         <label for="vendor">Vendor</label>
-                        <input
-                            id="vendor"
-                            name="vendor"
-                            type="text"
-                            value="{{ old('vendor', $project->vendor) }}"
-                            maxlength="255"
-                            required
-                        >
+                        <input id="vendor" name="vendor" type="text" value="{{ old('vendor', $project->vendor) }}"
+                            maxlength="255" required>
                         @error('vendor')
                             <span class="field-error">{{ $message }}</span>
                         @enderror
@@ -150,14 +112,8 @@
 
                     <div class="project-entry-field">
                         <label for="accountManagerName">Account Manager (AM)</label>
-                        <input
-                            id="accountManagerName"
-                            name="accountManagerName"
-                            type="text"
-                            value="{{ old('accountManagerName', $project->accountManagerName) }}"
-                            maxlength="255"
-                            required
-                        >
+                        <input id="accountManagerName" name="accountManagerName" type="text"
+                            value="{{ old('accountManagerName', $project->accountManagerName) }}" maxlength="255" required>
                         @error('accountManagerName')
                             <span class="field-error">{{ $message }}</span>
                         @enderror
@@ -183,7 +139,8 @@
                         @enderror
                     </div>
 
-                    <div id="customProductCategoryField" class="project-entry-field" @if (! $showCustomProductCategory) hidden @endif>
+                    <div id="customProductCategoryField" class="project-entry-field"
+                        @if (!$showCustomProductCategory) hidden @endif>
                         <label for="customProductCategory">New Product Category</label>
                         <input id="customProductCategory" name="customProductCategory" type="text"
                             value="{{ old('customProductCategory') }}" maxlength="255" autocomplete="off"
@@ -198,10 +155,7 @@
                         <label for="type">Project Type</label>
                         <select id="type" name="type" required>
                             @foreach ($projectTypes as $projectType)
-                                <option
-                                    value="{{ $projectType }}"
-                                    @selected(old('type', $project->type) === $projectType)
-                                >
+                                <option value="{{ $projectType }}" @selected(old('type', $project->type) === $projectType)>
                                     {{ $projectType }}
                                 </option>
                             @endforeach
@@ -215,10 +169,7 @@
                         <label for="status">Progress Status</label>
                         <select id="status" name="status" required>
                             @foreach ($progressStatuses as $progressStatus)
-                                <option
-                                    value="{{ $progressStatus }}"
-                                    @selected(old('status', $project->status) === $progressStatus)
-                                >
+                                <option value="{{ $progressStatus }}" @selected(old('status', $project->status) === $progressStatus)>
                                     {{ $progressStatus }}
                                 </option>
                             @endforeach
@@ -228,17 +179,12 @@
                         @enderror
                     </div>
                 </div>
-
+                <br>
                 <div class="project-entry-grid project-entry-grid-schedule">
                     <div class="project-entry-field">
                         <label for="date">Start Date (Created Date)</label>
-                        <input
-                            id="date"
-                            name="date"
-                            type="date"
-                            value="{{ old('date', $project->date?->format('Y-m-d')) }}"
-                            required
-                        >
+                        <input id="date" name="date" type="date"
+                            value="{{ old('date', $project->date?->format('Y-m-d')) }}" required>
                         @error('date')
                             <span class="field-error">{{ $message }}</span>
                         @enderror
@@ -246,26 +192,44 @@
 
                     <div class="project-entry-field">
                         <label for="end_date">End Date</label>
-                        <input
-                            id="end_date"
-                            name="end_date"
-                            type="date"
-                            value="{{ old('end_date', $project->end_date?->format('Y-m-d')) }}"
-                        >
+                        <input id="end_date" name="end_date" type="date"
+                            value="{{ old('end_date', $project->end_date?->format('Y-m-d')) }}">
                         @error('end_date')
                             <span class="field-error">{{ $message }}</span>
                         @enderror
                     </div>
 
                     @include('partials.document-upload-field')
+
+                    <div class="project-entry-field">
+                        <label for="po_date">PO Date</label>
+
+                        <input id="po_date" name="po_date" type="date"
+                            value="{{ old('po_date', $project->po_date?->format('Y-m-d')) }}">
+
+                        @error('po_date')
+                            <span class="field-error">
+                                {{ $message }}
+                            </span>
+                        @enderror
+                    </div>
+
+                    <div class="project-entry-field">
+                        <label for="invoice_date">Invoice Date</label>
+
+                        <input id="invoice_date" name="invoice_date" type="date"
+                            value="{{ old('invoice_date', $project->invoice_date?->format('Y-m-d')) }}">
+
+                        @error('invoice_date')
+                            <span class="field-error">
+                                {{ $message }}
+                            </span>
+                        @enderror
+                    </div>
+
                     <div class="project-entry-field project-entry-remark">
                         <label for="remark">Remark</label>
-                        <textarea
-                            id="remark"
-                            name="remark"
-                            rows="4"
-                            maxlength="2000"
-                        >{{ old('remark', $project->remark) }}</textarea>
+                        <textarea id="remark" name="remark" rows="4" maxlength="2000">{{ old('remark', $project->remark) }}</textarea>
                         @error('remark')
                             <span class="field-error">{{ $message }}</span>
                         @enderror
@@ -320,35 +284,15 @@
                 </div>
 
                 @if ($canEditProject)
-                    <form
-                        class="financial-entry-form"
-                        action="{{ route('projects.costs.store', $project) }}"
-                        method="POST"
-                    >
+                    <form class="financial-entry-form" action="{{ route('projects.costs.store', $project) }}"
+                        method="POST">
                         @csrf
-                        <input
-                            type="date"
-                            name="item_date"
-                            value="{{ old('item_date', now()->format('Y-m-d')) }}"
-                            required
-                        >
-                        <input
-                            type="text"
-                            name="description"
-                            value="{{ old('description') }}"
-                            placeholder="Cost description"
-                            maxlength="255"
-                            required
-                        >
-                        <input
-                            type="number"
-                            name="amount"
-                            value="{{ old('amount') }}"
-                            min="0.01"
-                            step="0.01"
-                            placeholder="Amount"
-                            required
-                        >
+                        <input type="date" name="item_date" value="{{ old('item_date', now()->format('Y-m-d')) }}"
+                            required>
+                        <input type="text" name="description" value="{{ old('description') }}"
+                            placeholder="Cost description" maxlength="255" required>
+                        <input type="number" name="amount" value="{{ old('amount') }}" min="0.01" step="0.01"
+                            placeholder="Amount" required>
                         <button type="submit">Add Cost</button>
                         <button type="reset" class="financial-clear-button">Clear</button>
                     </form>
@@ -375,54 +319,32 @@
                                     <td>
                                         @if ($canEditProject)
                                             <div class="financial-row-actions">
-                                                <button
-                                                    type="button"
-                                                    data-financial-edit="cost-{{ $costItem->project_cost_id }}"
-                                                >
+                                                <button type="button"
+                                                    data-financial-edit="cost-{{ $costItem->project_cost_id }}">
                                                     Edit
                                                 </button>
 
                                                 <form
                                                     action="{{ route('projects.costs.destroy', [$project, $costItem]) }}"
-                                                    method="POST"
-                                                    onsubmit="return confirm('Remove this cost item?');"
-                                                >
+                                                    method="POST" onsubmit="return confirm('Remove this cost item?');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit">Remove</button>
                                                 </form>
                                             </div>
 
-                                            <form
-                                                id="cost-{{ $costItem->project_cost_id }}"
+                                            <form id="cost-{{ $costItem->project_cost_id }}"
                                                 class="financial-inline-edit"
                                                 action="{{ route('projects.costs.update', [$project, $costItem]) }}"
-                                                method="POST"
-                                                hidden
-                                            >
+                                                method="POST" hidden>
                                                 @csrf
                                                 @method('PUT')
-                                                <input
-                                                    type="date"
-                                                    name="item_date"
-                                                    value="{{ $costItem->item_date?->format('Y-m-d') }}"
-                                                    required
-                                                >
-                                                <input
-                                                    type="text"
-                                                    name="description"
-                                                    value="{{ $costItem->description }}"
-                                                    maxlength="255"
-                                                    required
-                                                >
-                                                <input
-                                                    type="number"
-                                                    name="amount"
-                                                    value="{{ $costItem->amount }}"
-                                                    min="0.01"
-                                                    step="0.01"
-                                                    required
-                                                >
+                                                <input type="date" name="item_date"
+                                                    value="{{ $costItem->item_date?->format('Y-m-d') }}" required>
+                                                <input type="text" name="description"
+                                                    value="{{ $costItem->description }}" maxlength="255" required>
+                                                <input type="number" name="amount" value="{{ $costItem->amount }}"
+                                                    min="0.01" step="0.01" required>
                                                 <button type="submit">Save</button>
                                             </form>
                                         @else
@@ -451,35 +373,15 @@
                 </div>
 
                 @if ($canEditProject)
-                    <form
-                        class="financial-entry-form"
-                        action="{{ route('projects.revenues.store', $project) }}"
-                        method="POST"
-                    >
+                    <form class="financial-entry-form" action="{{ route('projects.revenues.store', $project) }}"
+                        method="POST">
                         @csrf
-                        <input
-                            type="date"
-                            name="item_date"
-                            value="{{ old('item_date', now()->format('Y-m-d')) }}"
-                            required
-                        >
-                        <input
-                            type="text"
-                            name="description"
-                            value="{{ old('description') }}"
-                            placeholder="Revenue description"
-                            maxlength="255"
-                            required
-                        >
-                        <input
-                            type="number"
-                            name="amount"
-                            value="{{ old('amount') }}"
-                            min="0.01"
-                            step="0.01"
-                            placeholder="Amount"
-                            required
-                        >
+                        <input type="date" name="item_date" value="{{ old('item_date', now()->format('Y-m-d')) }}"
+                            required>
+                        <input type="text" name="description" value="{{ old('description') }}"
+                            placeholder="Revenue description" maxlength="255" required>
+                        <input type="number" name="amount" value="{{ old('amount') }}" min="0.01" step="0.01"
+                            placeholder="Amount" required>
                         <button type="submit">Add Revenue</button>
                         <button type="reset" class="financial-clear-button">Clear</button>
                     </form>
@@ -506,54 +408,33 @@
                                     <td>
                                         @if ($canEditProject)
                                             <div class="financial-row-actions">
-                                                <button
-                                                    type="button"
-                                                    data-financial-edit="revenue-{{ $revenueItem->project_revenue_id }}"
-                                                >
+                                                <button type="button"
+                                                    data-financial-edit="revenue-{{ $revenueItem->project_revenue_id }}">
                                                     Edit
                                                 </button>
 
                                                 <form
                                                     action="{{ route('projects.revenues.destroy', [$project, $revenueItem]) }}"
                                                     method="POST"
-                                                    onsubmit="return confirm('Remove this revenue item?');"
-                                                >
+                                                    onsubmit="return confirm('Remove this revenue item?');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit">Remove</button>
                                                 </form>
                                             </div>
 
-                                            <form
-                                                id="revenue-{{ $revenueItem->project_revenue_id }}"
+                                            <form id="revenue-{{ $revenueItem->project_revenue_id }}"
                                                 class="financial-inline-edit"
                                                 action="{{ route('projects.revenues.update', [$project, $revenueItem]) }}"
-                                                method="POST"
-                                                hidden
-                                            >
+                                                method="POST" hidden>
                                                 @csrf
                                                 @method('PUT')
-                                                <input
-                                                    type="date"
-                                                    name="item_date"
-                                                    value="{{ $revenueItem->item_date?->format('Y-m-d') }}"
-                                                    required
-                                                >
-                                                <input
-                                                    type="text"
-                                                    name="description"
-                                                    value="{{ $revenueItem->description }}"
-                                                    maxlength="255"
-                                                    required
-                                                >
-                                                <input
-                                                    type="number"
-                                                    name="amount"
-                                                    value="{{ $revenueItem->amount }}"
-                                                    min="0.01"
-                                                    step="0.01"
-                                                    required
-                                                >
+                                                <input type="date" name="item_date"
+                                                    value="{{ $revenueItem->item_date?->format('Y-m-d') }}" required>
+                                                <input type="text" name="description"
+                                                    value="{{ $revenueItem->description }}" maxlength="255" required>
+                                                <input type="number" name="amount" value="{{ $revenueItem->amount }}"
+                                                    min="0.01" step="0.01" required>
                                                 <button type="submit">Save</button>
                                             </form>
                                         @else
@@ -578,7 +459,7 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const startDate = document.getElementById('date');
             const endDate = document.getElementById('end_date');
             const categorySelect = document.getElementById('productCategory');
@@ -593,9 +474,9 @@
                 endDate.min = startDate.value;
 
                 if (
-                    endDate.value
-                    && startDate.value
-                    && endDate.value < startDate.value
+                    endDate.value &&
+                    startDate.value &&
+                    endDate.value < startDate.value
                 ) {
                     endDate.value = '';
                 }
@@ -615,8 +496,8 @@
             updateCustomCategoryField();
 
             document.querySelectorAll('[data-financial-edit]').forEach(
-                function (button) {
-                    button.addEventListener('click', function () {
+                function(button) {
+                    button.addEventListener('click', function() {
                         const form = document.getElementById(
                             button.dataset.financialEdit
                         );

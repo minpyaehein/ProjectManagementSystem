@@ -131,7 +131,7 @@
                         @error('status')<span class="field-error">{{ $message }}</span>@enderror
                     </div>
                 </div>
-
+                <br>
                 <div class="project-entry-grid project-entry-grid-schedule">
                     <div class="project-entry-field">
                         <label for="date">Start Date (Created Date)</label>
@@ -146,7 +146,7 @@
                         @error('end_date')<span class="field-error">{{ $message }}</span>@enderror
                     </div>
 
-                    @include('projects.partials.document-upload-field')
+                    @include('partials.document-upload-field')
 
                     <div class="project-entry-field project-entry-remark">
                         <label for="remark">Remark</label>
